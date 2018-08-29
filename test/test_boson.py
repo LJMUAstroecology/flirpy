@@ -3,7 +3,7 @@ import doctest
 
 from flirpy.camera.boson import Boson
 
-class Test(unittest.TestCase):
+class BosonTest(unittest.TestCase):
     """Unit tests for Boson."""
 
     def setUp(self):
@@ -12,7 +12,7 @@ class Test(unittest.TestCase):
     def tearDown(self):
         self.camera.close()
 
-    def get_serial(self):
+    def test_get_serial(self):
         assert(self.camera.get_camera_serial() != 0)
 
 if __name__ == "__main__":
