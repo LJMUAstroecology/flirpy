@@ -12,14 +12,10 @@ class Core:
         self.conn.read_all()
     
     def send(self, packet):
-        print("Sending: ")
-        print(binascii.hexlify(packet))
         return self.conn.write(packet)
     
     def receive(self, nbytes):
         frame = self.conn.read(nbytes)
-        print("Received: ")
-        print(binascii.hexlify(frame))
         return frame
     
     def disconnect(self):
