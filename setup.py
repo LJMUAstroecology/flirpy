@@ -1,11 +1,18 @@
-from distutils.core import setup
+from setuptools import setup, find_packages
+
+import os
+
+__packagename__ = "flirpy"
 
 setup(
-    name='flirpy',
+    name=__packagename__,
     version='0.0.1',
-    packages=['flirpy.camera',],
+    packages=find_packages(),
     author='Josh Veitch-Michaelis',
     author_email='j.veitchmichaelis@gmail.com',
     license='MIT',
     long_description=open('README.md').read(),
+    zip_safe=False,
+    include_package_data=True,
+    install_requires=['pyserial']
 )
