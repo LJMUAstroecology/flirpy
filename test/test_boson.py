@@ -7,6 +7,7 @@ class BosonTest(unittest.TestCase):
     """Unit tests for Boson."""
 
     def setUp(self):
+        # Need port discovery...?
         self.camera = Boson("COM7")
     
     def tearDown(self):
