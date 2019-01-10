@@ -95,12 +95,12 @@ class splitter:
         os.makedirs(os.path.join(output_folder, "radiometric"), exist_ok=True)
         os.makedirs(os.path.join(output_folder, "preview"), exist_ok=True)
 
-    def _get_fff_iterator(self, mm):
+    def _get_fff_iterator(self, seq_blob):
         
         magic_pattern_fff = "\x46\x46\x46\x00".encode()
 
         valid = re.compile(magic_pattern_fff)
-        return valid.finditer(mm)
+        return valid.finditer(seq_blob)
 
     def _check_overwrite(self, path):
         exists = os.path.exists(path)
@@ -112,11 +112,12 @@ class splitter:
         
         with open(input_file, 'rb') as seq_file:
             
-            # Memory mapping may speed up things
+            # Memory mapping may speed up things. This is kinda slow though, because we still have to parse the entire file
+            # and then go back through the regexes to find individual frames. Should really use a stream.
             if self.use_mmap:
                 seq_blob = mmap.mmap(seq_file.fileno(), 0, access=mmap.ACCESS_READ)
             else:
-                seq_blob = seq_file
+                seq_blob = seq_file.read()
 
             it = self._get_fff_iterator(seq_blob)
 
@@ -148,7 +149,10 @@ class splitter:
                     continue
                 
                 # Extract next FFF frame
-                chunk = seq_blob.read(chunksize)
+                if self.use_mmap is False:
+                    chunk = seq_blob[index:index+chunksize]
+                else:
+                    chunk = seq_blob.read(chunksize)
                 
                 if i % self.step == 0:
 

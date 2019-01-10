@@ -30,6 +30,11 @@ class TestSeqSplit:
         assert os.path.exists(os.path.join(self.output_folder, "20181105_121443_IR", "preview"))
         assert os.path.exists(os.path.join(self.output_folder, "20181105_121443_IR", "radiometric"))
     
+    def test_process_no_mmap(self):
+        self.sp = splitter(self.output_folder)
+        self.sp.use_mmap = False
+        self.sp.process(self.test_data_path)
+        
     def test_process_seq_no_split(self):
         self.sp = splitter(self.output_folder)
 
