@@ -1,20 +1,12 @@
-import unittest
-import doctest
+from flirpy.camera.boson import Boson, find_boson
 
-from flirpy.camera.boson import Boson
+# Todo - actually find out which COM port it is..
 
-class BosonTest(unittest.TestCase):
-    """Unit tests for Boson."""
+def test_open_boson():
+    camera = Boson(find_boson())
+    camera.close()
 
-    def setUp(self):
-        # Need port discovery...?
-        self.camera = Boson("COM7")
-    
-    def tearDown(self):
-        self.camera.close()
-
-    def test_get_serial(self):
-        assert(self.camera.get_camera_serial() != 0)
-
-if __name__ == "__main__":
-    unittest.main()
+def test_get_serial():
+    camera = Boson(find_boson())
+    assert(camera.get_camera_serial() != 0)
+    camera.close()

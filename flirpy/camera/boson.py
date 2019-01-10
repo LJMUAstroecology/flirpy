@@ -2,6 +2,7 @@ from flirpy.camera.core import Core
 import struct
 import ctypes
 import binascii
+from serial.tools import list_ports
 
 crc_table = [
    0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
@@ -38,14 +39,37 @@ crc_table = [
    0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0
 ]
 
+def find_boson():
+
+    port = None
+
+    device_list = list_ports.comports()
+
+    VID = 0x09CB
+    PID = 0x4007
+    
+    for device in device_list:
+        if device.vid == VID and device.pid == PID:
+            port = device.device
+            break
+
+
+    if port is None:
+        raise ValueError("Couldn't find a Boson attached.")
+
+    return port
+
 class Boson(Core):
 
     def __init__(self, port, baudrate=921600):
         self.command_count = 0
+
         self.connect(port, baudrate)
 
         if self.conn.is_open:
             print("Connected")
+
+    
     
     def get_sensor_serial(self):
         pass
