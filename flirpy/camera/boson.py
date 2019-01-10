@@ -2,7 +2,10 @@ from flirpy.camera.core import Core
 import struct
 import ctypes
 import binascii
+import cv2
 from serial.tools import list_ports
+import os
+import cv2
 
 crc_table = [
    0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
@@ -39,7 +42,20 @@ crc_table = [
    0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0
 ]
 
-def find_boson():
+def find_boson_video():
+    # usb-FLIR_Boson_10878-video-index0
+    
+    res = -1
+    devices = os.listdir("/dev/v4l/by-id")
+    
+    for dev in devices:
+        s = dev.split("-")
+        if s[1].startswith("FLIR_Boson"):
+            res = int(s[-1][5:])
+
+    return res
+
+def find_boson_serial():
 
     port = None
 
@@ -63,14 +79,25 @@ class Boson(Core):
 
     def __init__(self, port, baudrate=921600):
         self.command_count = 0
-
+        self.cap = None
         self.connect(port, baudrate)
 
         if self.conn.is_open:
             print("Connected")
+        
+    def setup_video(self, device_id):
+        self.cap = cv2.VideoCapture(device_id)
+        self.cap.set(cv2.CAP_PROP_CONVERT_RGB, False)
+        self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y16 "))
+        
 
-    
-    
+    def grab(self, device_id):
+        if self.cap is None:
+            self.setup_video(device_id)
+        
+        return self.cap.read()[1]
+
+
     def get_sensor_serial(self):
         pass
 

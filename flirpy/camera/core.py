@@ -18,6 +18,9 @@ class Core:
         frame = self.conn.read(nbytes)
         return frame
     
+    def grab(self):
+        pass
+    
     def disconnect(self):
         if self.conn.is_open:
             self.conn.close()
