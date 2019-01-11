@@ -68,20 +68,6 @@ class splitter:
 
                 self.exiftool.write_meta(filemask)
         
-    def meta_from_file(self, filename):
-        meta = {}
-
-        with open(filename, 'r') as f:
-            for line in f:
-                res = line.split(":")
-
-                key = res[0].strip()
-                value = "".join(res[1:])
-
-                meta[key] = value
-
-        return meta
-    
     def write_tiff(self, filename, data):
         cv2.imwrite(filename, data)
     
@@ -166,7 +152,7 @@ class splitter:
                     if meta is None and self.export_radiometric:
                         frame.write(filename_fff)
                         self.exiftool.write_meta(filename_fff)
-                        meta = self.meta_from_file(filename_meta)
+                        meta = self.exiftool.meta_from_file(filename_meta)
 
                     # Export raw files and/or radiometric convert them
                     if self.export_tiff and self._check_overwrite(filename_tiff):

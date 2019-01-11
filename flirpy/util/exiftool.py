@@ -1,4 +1,5 @@
 import os
+import sys
 import pkg_resources
 import subprocess
 import glob
@@ -11,7 +12,7 @@ class Exiftool:
     def __init__(self, path=None):
         
         if path is None:
-            if os.name == "nt":
+            if sys.platform.startswith('win32'):
                 self.path = pkg_resources.resource_filename('flirpy', 'bin/exiftool.exe')
             else:
                 self.path = pkg_resources.resource_filename('flirpy', 'bin/exiftool')
@@ -48,3 +49,17 @@ class Exiftool:
 
         res = subprocess.run(cmd, cwd=cwd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         return res
+    
+    def meta_from_file(self, filename):
+        meta = {}
+
+        with open(filename, 'r') as f:
+            for line in f:
+                res = line.split(":")
+
+                key = res[0].strip()
+                value = "".join(res[1:])
+
+                meta[key] = value
+
+        return meta
