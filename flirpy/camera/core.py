@@ -5,7 +5,7 @@ import time
 class Core:
 
     def __init__(self):
-        pass
+        self.conn = None
     
     def connect(self, port, baudrate):
         self.conn = serial.Serial(port, baudrate, timeout=2)
@@ -22,7 +22,7 @@ class Core:
         pass
     
     def disconnect(self):
-        if self.conn.is_open:
+        if self.conn is not None and self.conn.is_open:
             self.conn.close()
     
     def close(self):
