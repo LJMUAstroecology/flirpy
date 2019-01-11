@@ -1,4 +1,4 @@
-import pytau.tau_config as ptc
+import tau_config as ptc
 
 import serial
 import struct
