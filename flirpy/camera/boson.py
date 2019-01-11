@@ -6,6 +6,7 @@ import cv2
 from serial.tools import list_ports
 import os
 import cv2
+import sys
 
 crc_table = [
    0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
@@ -42,56 +43,78 @@ crc_table = [
    0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0
 ]
 
-def find_boson_video():
-    # usb-FLIR_Boson_10878-video-index0
-    
-    res = -1
-    devices = os.listdir("/dev/v4l/by-id")
-    
-    for dev in devices:
-        s = dev.split("-")
-        if s[1].startswith("FLIR_Boson"):
-            res = int(s[-1][5:])
-
-    return res
-
-def find_boson_serial():
-
-    port = None
-
-    device_list = list_ports.comports()
-
-    VID = 0x09CB
-    PID = 0x4007
-    
-    for device in device_list:
-        if device.vid == VID and device.pid == PID:
-            port = device.device
-            break
-
-
-    if port is None:
-        raise ValueError("Couldn't find a Boson attached.")
-
-    return port
-
 class Boson(Core):
 
-    def __init__(self, port, baudrate=921600):
+    def __init__(self, port=None, baudrate=921600):
         self.command_count = 0
         self.cap = None
+
+        if port is None:
+            port = self.find_serial_device()
+
         self.connect(port, baudrate)
 
         if self.conn.is_open:
             print("Connected")
+
+    def find_serial_device(self):
+
+        port = None
+
+        device_list = list_ports.comports()
+
+        VID = 0x09CB
+        PID = 0x4007
         
-    def setup_video(self, device_id):
-        self.cap = cv2.VideoCapture(device_id)
+        for device in device_list:
+            if device.vid == VID and device.pid == PID:
+                port = device.device
+                break
+
+        if port is None:
+            raise ValueError("Couldn't find a Boson attached.")
+
+        return port
+
+    def find_video_device(self):
+
+        if os.name == "nt":
+            raise OSError("Automatically finding video device only supported in Linux")
+
+        res = None
+        devices = os.listdir("/dev/v4l/by-id")
+        
+        for dev in devices:
+            s = dev.split("-")
+            if s[1].startswith("FLIR_Boson"):
+                res = int(s[-1][5:])
+
+        return res
+        
+    def setup_video(self, device_id=None):
+
+        if device_id is None:
+            device_id = self.find_video_device()
+        
+        if device_id is None:
+            raise ValueError("Boson not connected.")
+
+        if sys.platform.startswith('linux'):
+            self.cap = cv2.VideoCapture(device_id + cv2.CAP_V4L2)
+        elif sys.platform.startswith('win32'):
+            self.cap = cv2.VideoCapture(device_id + cv2.CAP_DSHOW)
+        else:
+            # Catch anything else, e.g. Mac?
+            self.cap = cv2.VideoCapture(device_id)
+
+        if not self.cap.isOpened():
+           raise IOError("Failed to open capture device")
+
         self.cap.set(cv2.CAP_PROP_CONVERT_RGB, False)
         self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y16 "))
         
 
-    def grab(self, device_id):
+    def grab(self, device_id=None):
         if self.cap is None:
             self.setup_video(device_id)
         
@@ -109,29 +132,6 @@ class Boson(Core):
         res = self.decode_packet(res, receive_size=4)
 
         return int.from_bytes(res, byteorder='big')
-    
-    def crc_16(self, value, crcin):
-        """
-        Perform a single 16-bit CRC (as per FLIR's spec)
-        """
-        res = ((crcin << 8) ^ crc_table[((crcin >> 8) ^ (value)) & 255])
-        return ctypes.c_ushort(res).value
-    
-    def block_crc(self, data):
-        """
-        Perform a CRC check on a block of data
-
-        This is a manual implementation of CRC-16/AUG-CRCCCITT
-        to be used as a known working solution. It seems to be
-        identical to binascii.crc_hqx, so we use that.
-        """
-
-        crc = 0x1D0F
-
-        for b in data:
-            crc = self.crc_16(b, crc)
-        
-        return crc
     
     def decode_packet(self, data, receive_size=0):
 
@@ -187,7 +187,10 @@ class Boson(Core):
         if data is not None:
             payload += bytes(data)
 
-        # The CRC is computed from the channel number to the last data byte
+        # The CRC is computed from the channel number to the last data byte.
+        # This is actually incorrect, since we need to escape certain characters
+        # in the payload (e.g. the start/end markers). But this will work for 
+        # simple commands.
         crc_bytes = binascii.crc_hqx(payload[1:], 0x1D0F)
 
         footer = struct.Struct(">HB")
