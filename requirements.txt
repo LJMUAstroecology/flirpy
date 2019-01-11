@@ -2,3 +2,4 @@ pyserial
 opencv-python-headless
 tqdm
 numpy
+matplotlib
