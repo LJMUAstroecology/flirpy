@@ -82,12 +82,15 @@ class Boson(Core):
             raise OSError("Automatically finding video device only supported in Linux")
 
         res = None
-        devices = os.listdir("/dev/v4l/by-id")
+        path = "/sys/class/video4linux/"
+        devices = [os.path.join(path, device) for device in os.listdir(path)]
         
-        for dev in devices:
-            s = dev.split("-")
-            if s[1].startswith("FLIR_Boson"):
-                res = int(s[-1][5:])
+        for device in devices:
+            with open(os.path.join(device, "name"), 'r') as d:
+                device_name = d.read()
+                
+                if device_name == "Boson: FLIR Video\n":
+                    return int(device[-1])
 
         return res
         
