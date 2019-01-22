@@ -34,9 +34,13 @@ The library is organised into logical sections:
 Simply run 
 
 ``` bash
+pip install -r requirements.txt
 python setup.py install
 ```
 
 flirpy is distributed with a copy of [Exiftool](https://sno.phy.queensu.ca/~phil/exiftool/) which is used to extract metadata from certain file formats. 
 
+## Tests
+
+Some tests are hardware dependent, e.g. for cameras, so expect them to fail unless you own and have a camera to try them with. Others require files for testing things like extraction, these are quite large currently so are not distributed with the repo. You can use any .SEQ file, in principle.
 
