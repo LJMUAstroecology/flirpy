@@ -48,5 +48,4 @@ pip-delete-this-directory.txt
 *.spec
 *.pot
 .webassets-cache
-test/test_data
 .vscode
