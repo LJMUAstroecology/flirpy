@@ -1,0 +1,72 @@
+ExifTool Version Number         : 11.24
+File Name                       : frame_000000.fff
+Directory                       : /home/josh/data/flirpy_test/output/20181105_121443_IR/raw
+File Size                       : 643 kB
+File Modification Date/Time     : 2019:01:10 15:54:21+00:00
+File Access Date/Time           : 2019:01:10 15:54:21+00:00
+File Inode Change Date/Time     : 2019:01:10 15:54:21+00:00
+File Permissions                : rw-rw-r--
+File Type                       : FLIR
+File Type Extension             : fff
+MIME Type                       : application/unknown
+Creator Software                : FLIR
+Raw Thermal Image Width         : 640
+Raw Thermal Image Height        : 512
+Raw Thermal Image Type          : TIFF
+Raw Thermal Image               : (Binary data 655564 bytes, use -b option to extract)
+Emissivity                      : 0.94
+Object Distance                 : 50.00 m
+Reflected Apparent Temperature  : 20.0 C
+Atmospheric Temperature         : 20.0 C
+IR Window Temperature           : 22.0 C
+IR Window Transmission          : 1.00
+Relative Humidity               : 30.0 %
+Planck R1                       : 364058
+Planck B                        : 1428
+Planck F                        : 1
+Atmospheric Trans Alpha 1       : 0.006569
+Atmospheric Trans Alpha 2       : 0.012620
+Atmospheric Trans Beta 1        : -0.002276
+Atmospheric Trans Beta 2        : -0.006670
+Atmospheric Trans X             : 1.900000
+Camera Temperature Range Max    : 135.0 C
+Camera Temperature Range Min    : -25.0 C
+Camera Temperature Max Clip     : 150.0 C
+Camera Temperature Min Clip     : -60.0 C
+Camera Temperature Max Warn     : 135.0 C
+Camera Temperature Min Warn     : -25.0 C
+Camera Temperature Max Saturated: 150.0 C
+Camera Temperature Min Saturated: -60.0 C
+Camera Model                    : Duo Pro R
+Camera Part Number              : 83402-1201
+Camera Serial Number            : 8340357
+Camera Software                 : V01.01.08
+Lens Model                      : 
+Lens Part Number                : 
+Lens Serial Number              : 
+Field Of View                   : 45.0 deg
+Filter Model                    : 
+Filter Part Number              : 
+Filter Serial Number            : 
+Planck O                        : -228
+Planck R2                       : 1
+Raw Value Median                : 2681
+Raw Value Range                 : 116
+Date/Time Original              : 2018:11:05 12:14:43.084+01:00
+Focus Step Count                : 0
+Focus Distance                  : 0.0 m
+Frame Rate                      : 30
+GPS Valid                       : Yes
+GPS Version ID                  : 2.2.0.0
+GPS Latitude Ref                : North
+GPS Longitude Ref               : West
+GPS Latitude                    : 53 deg 26' 56.06" N
+GPS Longitude                   : 2 deg 48' 54.09" W
+GPS Altitude                    : 81.02 m
+GPS Speed Ref                   : km/h
+GPS Track Ref                   : True North
+GPS Speed                       : 0.05
+GPS Track                       : 330.56
+GPS Map Datum                   : WGS84
+Peak Spectral Sensitivity       : 10.1 um
+GPS Position                    : 53 deg 26' 56.06" N, 2 deg 48' 54.09" W
