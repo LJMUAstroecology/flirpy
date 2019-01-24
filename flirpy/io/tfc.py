@@ -1,0 +1,2 @@
+class splitter:
+    pass
