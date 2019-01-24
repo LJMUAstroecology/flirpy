@@ -22,8 +22,9 @@ class Core:
         pass
     
     def disconnect(self):
-        if self.conn is not None and self.conn.is_open:
-            self.conn.close()
+        if self.conn is not None:
+            if self.conn.is_open:
+                self.conn.close()
     
     def close(self):
         self.disconnect()

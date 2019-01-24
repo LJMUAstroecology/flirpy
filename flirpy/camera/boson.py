@@ -48,14 +48,15 @@ class Boson(Core):
     def __init__(self, port=None, baudrate=921600):
         self.command_count = 0
         self.cap = None
+        self.conn = None
 
         if port is None:
             port = self.find_serial_device()
+            if port is not None:
+                self.connect(port, baudrate)
 
-        self.connect(port, baudrate)
-
-        if self.conn.is_open:
-            print("Connected")
+                if self.conn.is_open:
+                    print("Connected")
 
     def find_serial_device(self):
 
@@ -71,9 +72,6 @@ class Boson(Core):
                 port = device.device
                 break
 
-        if port is None:
-            raise ValueError("Couldn't find a Boson attached.")
-
         return port
 
     def find_video_device(self):
@@ -88,7 +86,7 @@ class Boson(Core):
         for device in devices:
             with open(os.path.join(device, "name"), 'r') as d:
                 device_name = d.read()
-                
+
                 if device_name == "Boson: FLIR Video\n":
                     return int(device[-1])
 
@@ -122,7 +120,6 @@ class Boson(Core):
             self.setup_video(device_id)
         
         return self.cap.read()[1]
-
 
     def get_sensor_serial(self):
         pass
