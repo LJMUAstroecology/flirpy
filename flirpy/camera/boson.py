@@ -110,9 +110,10 @@ class Boson(Core):
 
         if not self.cap.isOpened():
            raise IOError("Failed to open capture device")
-
-        self.cap.set(cv2.CAP_PROP_CONVERT_RGB, False)
+        
+        # The order of these calls matters!
         self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y16 "))
+        self.cap.set(cv2.CAP_PROP_CONVERT_RGB, False)
         
 
     def grab(self, device_id=None):
