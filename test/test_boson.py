@@ -1,4 +1,9 @@
 from flirpy.camera.boson import Boson
+import pytest
+
+with Boson() as camera:
+    if camera.conn is None:
+        pytest.skip("Boson not connected, skipping tests", allow_module_level=True)
 
 def test_open_boson():
     camera = Boson()
