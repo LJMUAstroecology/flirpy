@@ -62,9 +62,9 @@ class splitter:
                 logger.info("Extracting metadata")
 
                 if self.split_folders:
-                    filemask = os.path.join(folder, "raw", "frame_000*.fff")
+                    filemask = os.path.join(folder, "raw", "frame_*.fff")
                 else:
-                    filemask = os.path.join(folder, "frame_000*.fff")
+                    filemask = os.path.join(folder, "frame_*.fff")
 
                 self.exiftool.write_meta(filemask)
         
