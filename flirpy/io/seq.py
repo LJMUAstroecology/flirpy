@@ -69,7 +69,7 @@ class splitter:
                 self.exiftool.write_meta(filemask)
         
     def write_tiff(self, filename, data):
-        cv2.imwrite(filename, data)
+        cv2.imwrite(filename, data.astype("uint16"))
     
     def write_preview(self, filename, data):
         drange = data.max()-data.min()

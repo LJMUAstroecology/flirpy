@@ -2,9 +2,10 @@ import pkg_resources
 import os
 import subprocess
 import tempfile
+import glob
+import cv2
 
 from flirpy.io.seq import splitter
-import glob
 
 class TestSeqSplit:
     def setup_method(self):
@@ -35,6 +36,16 @@ class TestSeqSplit:
         assert len(glob.glob(os.path.join(self.output_folder, "test", "raw", "*.txt"))) > 0
         assert len(glob.glob(os.path.join(self.output_folder, "test", "preview", "*.png"))) > 0
         assert len(glob.glob(os.path.join(self.output_folder, "test", "radiometric", "*.tiff"))) > 0
+
+    def test_raw_is_16_bit(self):
+        self.sp = splitter(self.output_folder)
+        self.sp.process(self.test_data_path)
+
+        raw_files = glob.glob(os.path.join(self.output_folder, "test", "radiometric", "*.tiff"))
+
+        for raw_file in raw_files:
+            assert(cv2.imread(raw_file, cv2.IMREAD_UNCHANGED).dtype == "uint16")
+
 
     def test_process_no_mmap(self):
         self.sp = splitter(self.output_folder)
