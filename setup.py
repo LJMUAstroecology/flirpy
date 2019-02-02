@@ -14,5 +14,6 @@ setup(
     long_description=open('README.md').read(),
     zip_safe=False,
     include_package_data=True,
+    scripts=['scripts/split_seqs'],
     install_requires=['pyserial']
 )

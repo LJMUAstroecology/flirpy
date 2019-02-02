@@ -30,12 +30,30 @@ class Exiftool:
             return False
 
         return False
+
+    def copy_meta(self, folder, filemask="%f.fff", output_folder="./", ext="tiff"):
+
+        cwd = folder
+
+        cmd = [self.path]
+        cmd.append("-r")
+        cmd.append("-overwrite_original")
+        cmd.append("-tagsfromfile")
+        cmd.append(filemask)
+        cmd.append("-ext")
+        cmd.append(ext)
+        cmd.append(output_folder)
+
+        logger.debug(" ".join(cmd))
+
+        res = subprocess.run(cmd, cwd=cwd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        return res
     
     def write_meta(self, filemask):
 
         # Do some mangling here to avoid busting the command line limit.
         # First, we run the command in the right working directory
-        cwd, mask = os.path.split(filemask)
+        cwd, _ = os.path.split(filemask)
 
         # Then we expand the wildcard and pass to the shell 
         # (but don't need to pass the full path since we use cwd)
@@ -46,6 +64,8 @@ class Exiftool:
         cmd += files
         cmd.append("-w")
         cmd.append(".txt")
+
+        logger.debug(" ".join(cmd))
 
         res = subprocess.run(cmd, cwd=cwd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         return res

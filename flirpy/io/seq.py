@@ -65,10 +65,15 @@ class splitter:
 
                 if self.split_folders:
                     filemask = os.path.join(folder, "raw", "frame_*.fff")
+                    copy_filemask = os.path.normpath("./raw/%f.fff")
+                    radiometric_folder = os.path.normpath("./radiometric")
                 else:
                     filemask = os.path.join(folder, "frame_*.fff")
+                    copy_filemask = os.path.normpath("%f.fff")
+                    radiometric_folder = os.path.normpath("./")
 
                 self.exiftool.write_meta(filemask)
+                self.exiftool.copy_meta(folder, filemask=copy_filemask,output_folder=radiometric_folder)
         
     def write_tiff(self, filename, data):
         cv2.imwrite(filename, data.astype("uint16"))
@@ -96,7 +101,7 @@ class splitter:
     
     def _process_seq(self, input_file, output_subfolder):
         
-        logger.info("Processing {}".format(input_file))
+        logger.debug("Processing {}".format(input_file))
         
         with open(input_file, 'rb') as seq_file:
             
