@@ -46,6 +46,8 @@ class splitter:
             file_list = [file_list]
 
         file_list = [os.path.expanduser(f) for f in file_list]
+
+        logger.info("Splitting {} files".format(len(file_list)))
         
         self.frame_count = self.start_index
         
