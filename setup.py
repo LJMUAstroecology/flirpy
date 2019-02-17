@@ -15,5 +15,5 @@ setup(
     zip_safe=False,
     include_package_data=True,
     scripts=['scripts/split_seqs'],
-    install_requires=['pyserial']
+    install_requires=['pyserial', 'opencv-python-headless', 'tqdm', 'numpy']
 )
