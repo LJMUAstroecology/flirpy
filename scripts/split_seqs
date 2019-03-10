@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+import flirpy.io.seq
+import glob
+import argparse
+import os
+import logging
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Split all files in folder')
+    parser.add_argument('-o', '--output', help='Output folder', default="./")
+    parser.add_argument('-i', '--input', help='Input file mask', required=True)
+    parser.add_argument('-v', '--verbosity', help='Logging level', default=None)
+
+    args = parser.parse_args()
+
+    if args.verbosity is not None:
+        numeric_level = getattr(logging, args.verbosity.upper(), None)
+        if not isinstance(numeric_level, int):
+            raise ValueError('Invalid log level: %s' % args.verbosity)
+        logging.basicConfig(level=numeric_level)
+
+    output_folder = args.output
+    input_mask = args.input
+
+    if output_folder is not "./":
+        os.makedirs(output_folder, exist_ok=True)
+
+    files = glob.glob(input_mask)
+
+    splitter = flirpy.io.seq.splitter(output_folder)
+    splitter.process(files)

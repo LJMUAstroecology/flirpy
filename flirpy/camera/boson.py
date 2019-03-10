@@ -57,6 +57,8 @@ crc_table = [
    0xEF1F, 0xFF3E, 0xCF5D, 0xDF7C, 0xAF9B, 0xBFBA, 0x8FD9, 0x9FF8,
    0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0
 ]
+import subprocess
+import pkg_resources
 
 class Boson(Core):
 
@@ -103,19 +105,35 @@ class Boson(Core):
         Returns: device number, or None if device not found.
         """
 
-        if os.name == "nt":
-            raise OSError("Automatically finding video device only supported in Linux")
-
         res = None
-        path = "/sys/class/video4linux/"
-        devices = [os.path.join(path, device) for device in os.listdir(path)]
-        
-        for device in devices:
-            with open(os.path.join(device, "name"), 'r') as d:
-                device_name = d.read()
 
-                if device_name == "Boson: FLIR Video\n":
-                    return int(device[-1])
+        if sys.platform.startswith('win32'):
+            device_check_path = pkg_resources.resource_filename('flirpy', 'bin/find_cameras.exe')
+            device_id = int(subprocess.check_output([device_check_path, "FLIR Video"]).decode())
+
+            if device_id >= 0:
+                return device_id
+
+        elif sys.platform == "darwin":
+            output = subprocess.check_output(["system_profiler", "SPCameraDataType"]).decode()
+            devices = [line.strip() for line in output.decode().split("\n") if line.strip().startswith("Model")]
+
+            device_id = 0
+
+            for device in devices:
+                if device.contains("VendorID_2507") and device.contains("ProductID_16391"):
+                    return device_id
+            
+        else:
+            path = "/sys/class/video4linux/"
+            devices = [os.path.join(path, device) for device in os.listdir(path)]
+            
+            for device in devices:
+                with open(os.path.join(device, "name"), 'r') as d:
+                    device_name = d.read()
+
+                    if device_name == "Boson: FLIR Video\n":
+                        return int(device[-1])
 
         return res
         

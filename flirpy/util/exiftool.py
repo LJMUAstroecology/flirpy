@@ -31,25 +31,23 @@ class Exiftool:
 
         return False
 
-    def get_meta(self, filename):
+    def copy_meta(self, folder, filemask="%f.fff", output_folder="./", ext="tiff"):
 
-        meta = {}
+        cwd = folder
 
-        cwd, _ = os.path.split(filename)
         cmd = [self.path]
-        cmd += filename
+        cmd.append("-r")
+        cmd.append("-overwrite_original")
+        cmd.append("-tagsfromfile")
+        cmd.append(filemask)
+        cmd.append("-ext")
+        cmd.append(ext)
+        cmd.append(output_folder)
 
-        res = str(subprocess.check_output(cmd, cwd=cwd, stderr=subprocess.PIPE, stdout=subprocess.PIPE))
+        logger.debug(" ".join(cmd))
 
-        for line in res:
-            res = line.split(":")
-
-            key = res[0].strip()
-            value = "".join(res[1:])
-
-            meta[key] = value
-
-        return meta
+        res = subprocess.run(cmd, cwd=cwd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        return res
     
     def write_meta_batch(self, filemask):
 
@@ -66,6 +64,8 @@ class Exiftool:
         cmd += files
         cmd.append("-w")
         cmd.append(".txt")
+
+        logger.debug(" ".join(cmd))
 
         res = subprocess.run(cmd, cwd=cwd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         return res

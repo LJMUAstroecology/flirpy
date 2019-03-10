@@ -1,4 +1,4 @@
-# flirpy
+# ![logo](logo.png)
 
 ![coverage](coverage.svg)
 

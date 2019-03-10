@@ -14,5 +14,10 @@ setup(
     long_description=open('README.md').read(),
     zip_safe=False,
     include_package_data=True,
+<<<<<<< HEAD
     install_requires=['pyserial', 'tqdm', 'numpy', 'opencv-python-headless']
+=======
+    scripts=['scripts/split_seqs'],
+    install_requires=['pyserial', 'opencv-python-headless', 'tqdm', 'numpy']
+>>>>>>> 92d163e6f11d25105413973e3684ddc52624e756
 )
