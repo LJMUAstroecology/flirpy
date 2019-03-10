@@ -3,28 +3,39 @@ import struct
 import numpy as np
 
 from flirpy.util.raw import raw2temp
+from flirpy.util.exiftool import Exiftool
 
 class Fff:
 
-    def __init__(self, data, height = 512, width = 640):
+    def __init__(self, data, height = 512, width = 640, exiftool_path=None):
 
         self.height = height
         self.width = width
         self.image = None
+        self.filename = None
+
+        self.exiftool = Exiftool(exiftool_path)
 
         if isinstance(data, bytes):
             self.data = data
         elif isinstance(data, str):
             with open(data, 'rb') as fff_file:
+                self.filename = fff_file
                 self.data = fff_file.read()
         else:
             raise TypeError("Data should be a bytes object or a string filename")
     
+    def meta_to_file(self):
+        if self.filename is None:
+            print("Need a filename!")
+        else:
+            self.exiftool.write_meta_batch(self.filename)
+
     def write(self, path):
         with open(path, 'wb') as fff_file:
             fff_file.write(self.data)
 
-    def find_data_offset(self, data):
+    def _find_data_offset(self, data):
     
         search = (self.width-1).to_bytes(2, 'little')\
                     +b"\x00\x00"\
@@ -43,7 +54,7 @@ class Fff:
     def get_image(self):
         
         if self.image is None:
-            offset = self.find_data_offset(self.data)
+            offset = self._find_data_offset(self.data)
             count = self.height*self.width
             self.image = np.frombuffer(self.data, offset=offset, dtype='uint16', count=count).reshape((self.height, self.width))
         

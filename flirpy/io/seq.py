@@ -66,17 +66,17 @@ class splitter:
                 else:
                     filemask = os.path.join(folder, "frame_*.fff")
 
-                self.exiftool.write_meta(filemask)
+                self.exiftool.write_meta_batch(filemask)
         
-    def write_tiff(self, filename, data):
+    def _write_tiff(self, filename, data):
         cv2.imwrite(filename, data.astype("uint16"))
     
-    def write_preview(self, filename, data):
+    def _write_preview(self, filename, data):
         drange = data.max()-data.min()
         preview_data = 255.0*((data-data.min())/drange)
         cv2.imwrite(filename, preview_data.astype('uint8'))
             
-    def make_split_folders(self, output_folder):
+    def _make_split_folders(self, output_folder):
         os.makedirs(os.path.join(output_folder, "raw"), exist_ok=True)
         os.makedirs(os.path.join(output_folder, "radiometric"), exist_ok=True)
         os.makedirs(os.path.join(output_folder, "preview"), exist_ok=True)
@@ -119,7 +119,7 @@ class splitter:
                 prev_pos = index
                 
                 if self.split_folders:
-                    self.make_split_folders(output_subfolder)
+                    self._make_split_folders(output_subfolder)
                                      
                     filename_fff = os.path.join(output_subfolder, "raw", "frame_{0:06d}.fff".format(self.frame_count))
                     filename_tiff = os.path.join(output_subfolder, "radiometric", "frame_{0:06d}.tiff".format(self.frame_count))
@@ -151,7 +151,7 @@ class splitter:
                     # We need at least one meta file to get the radiometric conversion coefficients
                     if meta is None and self.export_radiometric:
                         frame.write(filename_fff)
-                        self.exiftool.write_meta(filename_fff)
+                        self.exiftool.write_meta_batch(filename_fff)
                         meta = self.exiftool.meta_from_file(filename_meta)
 
                     # Export raw files and/or radiometric convert them
@@ -163,11 +163,11 @@ class splitter:
                             else:
                                 image = frame.get_image()
 
-                            self.write_tiff(filename_tiff, image)
+                            self._write_tiff(filename_tiff, image)
 
                     # Export preview frame (crushed to 8-bit)
                     if self.export_preview and self._check_overwrite(filename_preview):
-                        self.write_preview(filename_preview, image)
+                        self._write_preview(filename_preview, image)
             
                 self.frame_count += 1
                     
