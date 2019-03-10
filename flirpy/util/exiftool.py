@@ -18,9 +18,9 @@ class Exiftool:
                 self.path = pkg_resources.resource_filename('flirpy', 'bin/exiftool')
         else:
             self.path = path
-            self.check_path()
+            self._check_path()
     
-    def check_path(self):
+    def _check_path(self):
         try:
             subprocess.check_output([self.path])
             logger.info("Exiftool path verified at {}".format(self.path))
@@ -30,12 +30,32 @@ class Exiftool:
             return False
 
         return False
+
+    def get_meta(self, filename):
+
+        meta = {}
+
+        cwd, _ = os.path.split(filename)
+        cmd = [self.path]
+        cmd += filename
+
+        res = str(subprocess.check_output(cmd, cwd=cwd, stderr=subprocess.PIPE, stdout=subprocess.PIPE))
+
+        for line in res:
+            res = line.split(":")
+
+            key = res[0].strip()
+            value = "".join(res[1:])
+
+            meta[key] = value
+
+        return meta
     
-    def write_meta(self, filemask):
+    def write_meta_batch(self, filemask):
 
         # Do some mangling here to avoid busting the command line limit.
         # First, we run the command in the right working directory
-        cwd, mask = os.path.split(filemask)
+        cwd, _ = os.path.split(filemask)
 
         # Then we expand the wildcard and pass to the shell 
         # (but don't need to pass the full path since we use cwd)
