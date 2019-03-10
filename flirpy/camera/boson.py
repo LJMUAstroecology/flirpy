@@ -7,6 +7,21 @@ from serial.tools import list_ports
 import os
 import cv2
 import sys
+import logging
+
+# FFC Mode enum
+FLR_BOSON_MANUAL_FFC = 0
+FLR_BOSON_AUTO_FFC = 1
+FLR_BOSON_EXTERNAL_FFC = 2
+FLR_BOSON_SHUTTER_TEST_FFC = 3
+FLR_BOSON_FFCMODE_END = 4
+
+# FFC State enum
+FLR_BOSON_NO_FFC_PERFORMED = 0
+FLR_BOSON_FFC_IMMINENT = 1
+FLR_BOSON_FFC_IN_PROGRESS = 2
+FLR_BOSON_FFC_COMPLETE = 3
+FLR_BOSON_FFCSTATUS_END = 4
 
 crc_table = [
    0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
@@ -45,10 +60,13 @@ crc_table = [
 
 class Boson(Core):
 
-    def __init__(self, port=None, baudrate=921600):
+    def __init__(self, port=None, baudrate=921600, loglevel=logging.DEBUG):
         self.command_count = 0
         self.cap = None
         self.conn = None
+
+        logging.basicConfig(level=loglevel)
+        self.logger = logging.getLogger(__name__)
 
         if port is None:
             port = self.find_serial_device()
@@ -59,7 +77,11 @@ class Boson(Core):
                     print("Connected")
 
     def find_serial_device(self):
-
+        """
+        Attempts to find and return the serial port that the Boson is connected to.
+        
+        Returns: The port, if found. Returns None if not found.
+        """
         port = None
 
         device_list = list_ports.comports()
@@ -75,6 +97,11 @@ class Boson(Core):
         return port
 
     def find_video_device(self):
+        """
+        Attempts to automatically detect which video device corresponds to the Boson by searching for the PID and VID.
+
+        Returns: device number, or None if device not found.
+        """
 
         if os.name == "nt":
             raise OSError("Automatically finding video device only supported in Linux")
@@ -93,6 +120,12 @@ class Boson(Core):
         return res
         
     def setup_video(self, device_id=None):
+        """
+        Setup the camera for video/frame capture.
+
+        Attempts to automatically locate the camera, then opens an OpenCV VideoCapture object. The
+        capture object is setup to capture raw video.
+        """
 
         if device_id is None:
             device_id = self.find_video_device()
@@ -117,24 +150,249 @@ class Boson(Core):
         
 
     def grab(self, device_id=None):
+        """
+        Captures and returns an image.
+
+        Returns: the captured image as an array, or None if an error occured.
+        """
+
         if self.cap is None:
             self.setup_video(device_id)
         
         return self.cap.read()[1]
 
+    def reboot(self):
+        """
+        Reboot the camera
+        """
+        function_id = 0x00050010
+        self._send_packet(function_id)
+
+        return 
+
+
     def get_sensor_serial(self):
-        pass
+        """
+        Get the serial number of the sensor
+        """
+        function_id = 0x00050006
 
-    def get_camera_serial(self):
-
-        function_id = 0x00050002
-
-        res = self.send_packet(function_id, receive_size=4)
-        res = self.decode_packet(res, receive_size=4)
+        res = self._send_packet(function_id, receive_size=4)
+        res = self._decode_packet(res, receive_size=4)
 
         return int.from_bytes(res, byteorder='big')
     
-    def decode_packet(self, data, receive_size=0):
+    def get_firmware_revision(self):
+        """
+        Get the camera's software revision.
+
+        Returns: (Major, Minor, Patch)
+        """
+
+        function_id = 0x00050022
+
+        res = self._send_packet(function_id, receive_size=12)
+        res = self._decode_packet(res, receive_size=12)
+
+        return struct.Struct(">iii").unpack_from(res)
+    
+    def get_part_number(self):
+
+        function_id = 0x00050004
+        res = self._send_packet(function_id, receive_size=20)
+        res = self._decode_packet(res, receive_size=20)
+
+        return res.decode("utf-8") 
+
+    def do_ffc(self):
+        """
+        Manually request a flat field correction (FFC)
+        """
+        function_id = 0x00050007
+        self._send_packet(function_id)
+
+        return 
+        
+    def get_ffc_state(self):
+        """
+        Returns the FFC state:
+
+        0 = FLR_BOSON_NO_FFC_PERFORMED
+        1 = FLR_BOSON_FFC_IMMINENT
+        2 = FLR_BOSON_FFC_IN_PROGRESS
+        3 = FLR_BOSON_FFC_COMPLETE
+        4 = FLR_BOSON_FFCSTATUS_END
+
+        These return values are available as e.g.:
+
+        flirpy.camera.boson.FLR_BOSON_NO_FFC_PERFORMED
+
+        """
+        function_id = 0x0005000C
+
+        res = self._send_packet(function_id, receive_size=2)
+        res = self._decode_packet(res, receive_size=2)
+
+        return int.from_bytes(res, byteorder='big')
+
+    def get_ffc_mode(self):
+        """
+        Get the current FFC mode
+
+        0 = FLR_BOSON_NO_FFC_PERFORMED
+        1 = FLR_BOSON_FFC_IMMINENT
+        2 = FLR_BOSON_FFC_IN_PROGRESS
+        3 = FLR_BOSON_FFC_COMPLETE
+        4 = FLR_BOSON_FFCSTATUS_END
+        """
+        function_id = 0x00050013
+        res = self._send_packet(function_id, receive_size=4)
+        res = self._decode_packet(res, receive_size=4)
+
+        return int.from_bytes(res, byteorder='big')
+
+    def set_ffc_auto(self):
+        """
+        Set the FFC mode to automatic
+        """
+        function_id = 0x00050012
+        command = int(FLR_BOSON_AUTO_FFC).to_bytes(4, byteorder='big')
+        res = self._send_packet(function_id, data=command)
+        res = self._decode_packet(res)
+
+        return
+
+    def set_ffc_manual(self):
+        """
+        Set the FFC mode to manual
+        """
+        function_id = 0x00050012
+        command = int(FLR_BOSON_MANUAL_FFC).to_bytes(4, byteorder='big')
+        res = self._send_packet(function_id, data=command)
+        res = self._decode_packet(res)
+
+        return
+    
+    def set_ffc_temperature_threshold(self, temp_difference):
+        """
+        Set the change in camera temperature required before an FFC is requested.
+        """
+        function_id = 0x00050008
+        command = int(temp_difference * 10).to_bytes(2, byteorder='big')
+        res = self._send_packet(function_id, data=command)
+        res = self._decode_packet(res)
+
+        return
+    
+    def get_ffc_temperature_threshold(self):
+        """
+        Get the change in camera temperature before an FFC is requested
+
+        Returns: temperature in Celsius
+        """
+        function_id = 0x00050009
+
+        res = self._send_packet(function_id, receive_size=2)
+        res = self._decode_packet(res, receive_size=2)
+
+        return int.from_bytes(res, byteorder='big')/10.0
+    
+    def set_ffc_frame_threshold(self, seconds):
+        """
+        Set the number of seconds before an FFC is requested.
+        """
+        function_id = 0x0005000A
+        command = int(seconds).to_bytes(4, byteorder='big')
+        res = self._send_packet(function_id, data=command)
+        res = self._decode_packet(res)
+
+        return
+    
+    def get_ffc_frame_threshold(self):
+        """
+        Get the number of frames before an FFC is requested.
+        """
+        function_id = 0x0005000B
+        res = self._send_packet(function_id, receive_size=4)
+        res = self._decode_packet(res, receive_size=4)
+
+        return int.from_bytes(res, byteorder='big')
+    
+    def get_last_ffc_temperature(self):
+        """
+        Get the temperature (in Kelvin) that the last FFC occured
+        """
+        function_id = 0x0005005E
+
+        res = self._send_packet(function_id, receive_size=2)
+        res = self._decode_packet(res, receive_size=2)
+
+        return int.from_bytes(res, byteorder='big')/10.0
+
+
+    def get_last_ffc_frame_count(self):
+        """
+        Get the frame count when the last FFC occured
+        """
+
+        function_id = 0x0005005D
+
+        res = self._send_packet(function_id, receive_size=4)
+        res = self._decode_packet(res, receive_size=4)
+
+        return int.from_bytes(res, byteorder='big')
+    
+    def get_frame_count(self):
+        """
+        Get the number of frames captured since the camera was turned on.
+
+        Returns: number of frames
+        """
+        function_id = 0x00020002
+
+        res = self._send_packet(function_id, receive_size=4)
+        res = self._decode_packet(res, receive_size=4)
+
+        return int.from_bytes(res, byteorder='big')
+
+    def get_fpa_temperature(self):
+        """
+        Get the current focal plane array (FPA) temperature in Celsius.
+
+        Returns: temperature in Celsius
+        """
+        function_id = 0x00050030
+
+        res = self._send_packet(function_id, receive_size=2)
+        res = self._decode_packet(res, receive_size=2)
+
+        return int.from_bytes(res, byteorder='big')/10.0
+
+    def get_camera_serial(self):
+        """
+        Get the camera serial number 
+
+        Returns: serial number as an integer
+        """
+        function_id = 0x00050002
+
+        res = self._send_packet(function_id, receive_size=4)
+        res = self._decode_packet(res, receive_size=4)
+
+        return int.from_bytes(res, byteorder='big')
+
+    def _crc(self, data):
+        """
+        Full CRC with escape bytes (ugh)
+        """
+        pass
+    
+    def _decode_packet(self, data, receive_size=0):
+        """
+        Decodes a data packet from the camera.
+        """
+
+        payload = None
 
         if receive_size > 0:
             frame = struct.Struct(">BBIII{}sHB".format(receive_size))
@@ -146,20 +404,25 @@ class Boson(Core):
             res = frame.unpack(data)
 
             start_marker, channel_id, sequence, function_id, return_code, crc, end_marker = res
-        
+            
+
         if start_marker != 0x8E and end_marker != 0xAE:
-            print("Invalid frame markers")
-        
+            self.logger.warning("Invalid frame markers")
+            print("Invalid frame")
+            payload = None
+
         crc_bytes = binascii.crc_hqx(data[1:-3], 0x1D0F)
 
         if crc != crc_bytes:
+            self.logger.warning("Invalid checksum")
             print("Invalid checksum")
         
         return payload
 
-    def send_packet(self, function_id, data=None, receive_size=0):
-
+    def _send_packet(self, function_id, data=None, receive_size=0):
         """
+        Sends a data packet to the camera.
+
         Send Package Format:
 
         Start frame byte = 0x8E
