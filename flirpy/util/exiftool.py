@@ -49,7 +49,7 @@ class Exiftool:
         res = subprocess.run(cmd, cwd=cwd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         return res
     
-    def write_meta_batch(self, filemask):
+    def write_meta(self, filemask):
 
         # Do some mangling here to avoid busting the command line limit.
         # First, we run the command in the right working directory
@@ -68,6 +68,7 @@ class Exiftool:
         logger.debug(" ".join(cmd))
 
         res = subprocess.run(cmd, cwd=cwd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        
         return res
     
     def meta_from_file(self, filename):

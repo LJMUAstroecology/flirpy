@@ -73,6 +73,8 @@ class splitter:
                     radiometric_folder = os.path.normpath("./")
 
                 self.exiftool.write_meta(filemask)
+                
+                # Copy geotags
                 self.exiftool.copy_meta(folder, filemask=copy_filemask,output_folder=radiometric_folder)
         
     def _write_tiff(self, filename, data):
@@ -158,7 +160,7 @@ class splitter:
                     # We need at least one meta file to get the radiometric conversion coefficients
                     if meta is None and self.export_radiometric:
                         frame.write(filename_fff)
-                        self.exiftool.write_meta_batch(filename_fff)
+                        self.exiftool.write_meta(filename_fff)
                         meta = self.exiftool.meta_from_file(filename_meta)
 
                     # Export raw files and/or radiometric convert them
