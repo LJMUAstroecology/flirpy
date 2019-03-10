@@ -14,5 +14,5 @@ setup(
     long_description=open('README.md').read(),
     zip_safe=False,
     include_package_data=True,
-    install_requires=['pyserial']
+    install_requires=['pyserial', 'tqdm', 'numpy', 'opencv-python-headless']
 )
