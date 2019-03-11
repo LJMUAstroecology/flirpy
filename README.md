@@ -21,6 +21,8 @@ The library has been tested with:
 
 Support for the Lepton is coming soon, but will probably be limited to the Raspberry Pi for the time being.
 
+**It is strongly recommended that you use Python 3"". I have tried to ensure that certain functions are portable between Python 2 and 3, mainly those involved with camera communication (for example if you want to use flirpy with ROS, most of the important stuff works). However, some file IO is hit and miss on Python 2 due to differences in regexes. Python 2 is effectively end of life and while I'd like to support both, it's a low priority. Submit a PR if you like!
+
 ## Library organisation
 
 The library is organised into logical sections:
@@ -85,7 +87,7 @@ flirpy is distributed with a copy of [Exiftool](https://sno.phy.queensu.ca/~phil
 
 ### Installation on ARM (e.g. Raspberry Pi)
 
-Flirpy works perfectly well and has been tested on the Raspberry Pi. If you're building from scratch, you need to install a few things manually.
+Flirpy mostly works well, and has been tested, on the Raspberry Pi. If you're building from scratch, you need to install a few things manually. Try to use Python 3 if you can.
 
 It's recommended that you first install the Python dependencies using `pip` in combination with [piwheels](https://www.piwheels.org/). For whatever reason, `setuptools` does not find these files, so it will fail if e.g. OpenCV isn't installed already. Once you've set up piwheels (it should be automatic on Raspbian if you've installed pip3) run:
 
