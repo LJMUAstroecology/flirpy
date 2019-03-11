@@ -197,7 +197,7 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=4)
         res = self._decode_packet(res, receive_size=4)
 
-        return int.from_bytes(res, byteorder='big')
+        return struct.unpack(">I", res)[0]
     
     def get_firmware_revision(self):
         """
@@ -250,7 +250,7 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=2)
         res = self._decode_packet(res, receive_size=2)
 
-        return int.from_bytes(res, byteorder='big')
+        return struct.unpack(">H", res)[0]
 
     def get_ffc_mode(self):
         """
@@ -266,14 +266,14 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=4)
         res = self._decode_packet(res, receive_size=4)
 
-        return int.from_bytes(res, byteorder='big')
+        return struct.unpack(">I", res)[0]
 
     def set_ffc_auto(self):
         """
         Set the FFC mode to automatic
         """
         function_id = 0x00050012
-        command = int(FLR_BOSON_AUTO_FFC).to_bytes(4, byteorder='big')
+        command = struct.pack(">I", FLR_BOSON_AUTO_FFC)
         res = self._send_packet(function_id, data=command)
         res = self._decode_packet(res)
 
@@ -284,7 +284,7 @@ class Boson(Core):
         Set the FFC mode to manual
         """
         function_id = 0x00050012
-        command = int(FLR_BOSON_MANUAL_FFC).to_bytes(4, byteorder='big')
+        command = struct.pack(">I", FLR_BOSON_MANUAL_FFC)
         res = self._send_packet(function_id, data=command)
         res = self._decode_packet(res)
 
@@ -295,7 +295,7 @@ class Boson(Core):
         Set the change in camera temperature required before an FFC is requested.
         """
         function_id = 0x00050008
-        command = int(temp_difference * 10).to_bytes(2, byteorder='big')
+        command = struct.pack(">H", int(temp_difference * 10))
         res = self._send_packet(function_id, data=command)
         res = self._decode_packet(res)
 
@@ -312,14 +312,14 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=2)
         res = self._decode_packet(res, receive_size=2)
 
-        return int.from_bytes(res, byteorder='big')/10.0
+        return struct.unpack(">H", res)[0]/10.0
     
     def set_ffc_frame_threshold(self, seconds):
         """
         Set the number of seconds before an FFC is requested.
         """
         function_id = 0x0005000A
-        command = int(seconds).to_bytes(4, byteorder='big')
+        command = struct.pack(">I", seconds)
         res = self._send_packet(function_id, data=command)
         res = self._decode_packet(res)
 
@@ -333,7 +333,7 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=4)
         res = self._decode_packet(res, receive_size=4)
 
-        return int.from_bytes(res, byteorder='big')
+        return struct.unpack(">I", res)[0]
     
     def get_last_ffc_temperature(self):
         """
@@ -344,7 +344,7 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=2)
         res = self._decode_packet(res, receive_size=2)
 
-        return int.from_bytes(res, byteorder='big')/10.0
+        return struct.unpack(">H", res)[0]/10.0
 
 
     def get_last_ffc_frame_count(self):
@@ -357,7 +357,7 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=4)
         res = self._decode_packet(res, receive_size=4)
 
-        return int.from_bytes(res, byteorder='big')
+        return struct.unpack(">I", res)[0]
     
     def get_frame_count(self):
         """
@@ -370,7 +370,7 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=4)
         res = self._decode_packet(res, receive_size=4)
 
-        return int.from_bytes(res, byteorder='big')
+        return struct.unpack(">I", res)[0]
 
     def get_fpa_temperature(self):
         """
@@ -383,7 +383,7 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=2)
         res = self._decode_packet(res, receive_size=2)
 
-        return int.from_bytes(res, byteorder='big')/10.0
+        return struct.unpack(">H", res)[0]/10.0
 
     def get_camera_serial(self):
         """
@@ -396,7 +396,7 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=4)
         res = self._decode_packet(res, receive_size=4)
 
-        return int.from_bytes(res, byteorder='big')
+        return struct.unpack(">I", res)[0]
 
     def _crc(self, data):
         """
