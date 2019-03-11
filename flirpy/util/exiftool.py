@@ -54,7 +54,7 @@ class Exiftool:
 
         logger.debug(" ".join(cmd))
 
-        res = subprocess.run(cmd, cwd=cwd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        res = subprocess.call(cmd, cwd=cwd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         return res
     
     def write_meta(self, filemask):
@@ -75,7 +75,7 @@ class Exiftool:
 
         logger.debug(" ".join(cmd))
 
-        res = subprocess.run(cmd, cwd=cwd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        res = subprocess.call(cmd, cwd=cwd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
         
         return res
     

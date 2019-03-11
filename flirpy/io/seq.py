@@ -10,6 +10,11 @@ from glob import iglob, glob
 import subprocess
 from tqdm.autonotebook import tqdm
 
+try:
+  from pathlib import Path
+except ImportError:
+  from pathlib2 import Path  # python 2 backport
+
 from flirpy.util.exiftool import Exiftool
 from flirpy.io.fff import Fff
 
@@ -35,7 +40,7 @@ class splitter:
         self.use_mmap = True
 
         self.output_folder = os.path.expanduser(output_folder)
-        os.makedirs(self.output_folder, exist_ok=True)
+        Path(self.output_folder).mkdir(exist_ok=True)
     
     def set_start_index(self, index):
         self.start_index = int(index)
@@ -54,7 +59,7 @@ class splitter:
         for seq in tqdm(file_list):
             subfolder, _ = os.path.splitext(os.path.basename(seq))
             folder = os.path.join(self.output_folder, subfolder)
-            os.makedirs(folder, exist_ok=True)
+            Path(folder).mkdir(exist_ok=True)
 
             logger.info("Splitting {} into {}".format(seq, folder))
             self._process_seq(seq, folder)
@@ -73,7 +78,7 @@ class splitter:
                     radiometric_folder = os.path.normpath("./")
 
                 self.exiftool.write_meta(filemask)
-                
+
                 # Copy geotags
                 self.exiftool.copy_meta(folder, filemask=copy_filemask,output_folder=radiometric_folder)
         
@@ -86,9 +91,9 @@ class splitter:
         cv2.imwrite(filename, preview_data.astype('uint8'))
             
     def _make_split_folders(self, output_folder):
-        os.makedirs(os.path.join(output_folder, "raw"), exist_ok=True)
-        os.makedirs(os.path.join(output_folder, "radiometric"), exist_ok=True)
-        os.makedirs(os.path.join(output_folder, "preview"), exist_ok=True)
+        Path(os.path.join(output_folder, "raw")).mkdir(exist_ok=True)
+        Path(os.path.join(output_folder, "radiometric")).mkdir(exist_ok=True)
+        Path(os.path.join(output_folder, "preview")).mkdir(exist_ok=True)
 
     def _get_fff_iterator(self, seq_blob):
         

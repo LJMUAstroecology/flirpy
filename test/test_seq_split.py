@@ -1,7 +1,12 @@
 import pkg_resources
 import os
 import subprocess
-import tempfile
+
+import sys
+if sys.version.startswith('2'):
+    from backports import tempfile
+else:
+    import tempfile
 import glob
 import cv2
 
