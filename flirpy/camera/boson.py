@@ -2,7 +2,6 @@ from flirpy.camera.core import Core
 import struct
 import ctypes
 import binascii
-import cv2
 from serial.tools import list_ports
 import os
 import cv2
@@ -426,14 +425,11 @@ class Boson(Core):
 
         if start_marker != 0x8E and end_marker != 0xAE:
             self.logger.warning("Invalid frame markers")
-            print("Invalid frame")
-            payload = None
 
         crc_bytes = binascii.crc_hqx(data[1:-3], 0x1D0F)
 
         if crc != crc_bytes:
             self.logger.warning("Invalid checksum")
-            print("Invalid checksum")
         
         return payload
 
