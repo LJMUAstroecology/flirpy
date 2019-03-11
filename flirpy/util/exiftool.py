@@ -3,6 +3,7 @@ import sys
 import pkg_resources
 import subprocess
 import glob
+import platform
 
 import logging
 logger = logging.getLogger(__name__)
@@ -14,8 +15,15 @@ class Exiftool:
         if path is None:
             if sys.platform.startswith('win32'):
                 self.path = pkg_resources.resource_filename('flirpy', 'bin/exiftool.exe')
+            # Fix problems on ARM platforms
+            elif platform.uname()[4].startswith("arm"):
+                if os.path.isfile("/usr/bin/exiftool"):
+                    self.path = "/usr/bin/exiftool"
+                else:
+                    logger.warning("Exiftool not installed, try: apt install exiftool")
             else:
                 self.path = pkg_resources.resource_filename('flirpy', 'bin/exiftool')
+
         else:
             self.path = path
             self._check_path()

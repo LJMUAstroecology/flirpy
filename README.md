@@ -81,7 +81,21 @@ Or:
 python setup.py install
 ```
 
-flirpy is distributed with a copy of [Exiftool](https://sno.phy.queensu.ca/~phil/exiftool/) which is used to extract metadata from certain file formats. 
+flirpy is distributed with a copy of [Exiftool](https://sno.phy.queensu.ca/~phil/exiftool/) which is used to extract metadata from certain file formats.
+
+### Installation on ARM (e.g. Raspberry Pi)
+
+Flirpy works perfectly well and has been tested on the Raspberry Pi. If you're building from scratch, you need to install a few things manually.
+
+It's recommended that you first install the Python dependencies using `pip` in combination with [piwheels](https://www.piwheels.org/). For whatever reason, `setuptools` does not find these files, so it will fail if e.g. OpenCV isn't installed already. Once you've set up piwheels (it should be automatic on Raspbian if you've installed pip3) run:
+
+``` bash
+pip3 install -r requirements.txt
+```
+
+You may need to install some dependencies for OpenCV, for example `libjasper-dev`.
+
+You should also install Exiftool manually with `sudo apt install exiftool`.
 
 ## Tests
 
