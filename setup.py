@@ -1,6 +1,13 @@
 from setuptools import setup, find_packages
 
 import os
+import sys
+import platform
+
+if platform.uname()[4].startswith("arm") and sys.version.startswith("2"):
+    install_requires=['pyserial', 'tqdm', 'numpy']
+else:
+    install_requires=['pyserial', 'opencv-python-headless', 'tqdm', 'numpy']
 
 __packagename__ = "flirpy"
 
@@ -15,5 +22,5 @@ setup(
     zip_safe=False,
     include_package_data=True,
     scripts=['scripts/split_seqs'],
-    install_requires=['pyserial', 'opencv-python-headless', 'tqdm', 'numpy']
+    install_requires = install_requires
 )
