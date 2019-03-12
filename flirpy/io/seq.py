@@ -83,11 +83,13 @@ class splitter:
                 self.exiftool.copy_meta(folder, filemask=copy_filemask,output_folder=radiometric_folder)
         
     def _write_tiff(self, filename, data):
+        logger.debug("Writing {}", filename)
         cv2.imwrite(filename, data.astype("uint16"))
     
     def _write_preview(self, filename, data):
         drange = data.max()-data.min()
         preview_data = 255.0*((data-data.min())/drange)
+        logger.debug("Writing {}", filename)
         cv2.imwrite(filename, preview_data.astype('uint8'))
             
     def _make_split_folders(self, output_folder):

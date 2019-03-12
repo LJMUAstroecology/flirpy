@@ -75,7 +75,7 @@ class Boson(Core):
                 self.connect(port, baudrate)
 
                 if self.conn.is_open:
-                    print("Connected")
+                    self.logger.info("Connected")
 
     def find_serial_device(self):
         """
