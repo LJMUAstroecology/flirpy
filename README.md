@@ -21,7 +21,7 @@ The library has been tested with:
 
 Support for the Lepton is coming soon, but will probably be limited to the Raspberry Pi for the time being.
 
-**It is strongly recommended that you use Python 3"". I have tried to ensure that certain functions are portable between Python 2 and 3, mainly those involved with camera communication (for example if you want to use flirpy with ROS, most of the important stuff works). However, some file IO is hit and miss on Python 2 due to differences in regexes. Python 2 is effectively end of life and while I'd like to support both, it's a low priority. Submit a PR if you like!
+It is strongly recommended that you use Python 3. I have put some effort into making sure that the library is back-compatible with Python 2, since there are several use-cases (like ROS) where it's important. However, there may be bugs and as Python 2 is EOL in 2020, this is a low priority.
 
 ## Library organisation
 
@@ -101,15 +101,23 @@ You should also install Exiftool manually with `sudo apt install exiftool`.
 
 ## Tests
 
-To run the test suite, install `pytest` and run:
+To run the test suite:
 
 ``` bash
+pip install pytest pytest-cov
 pytest --cov=flirpy test
 ```
 
 Some tests are hardware dependent, e.g. for cameras, so expect them to fail unless you own and have a camera to try them with. Hardware tests are skipped by default if the requisite camera is not plugged in.
 
 The repository includes some small representative examples of image files (e.g. SEQ). It is tested and is routinely used with flight data from FLIR Duo cameras, so larger files aren't a problem, but they're too large to include in the repository.
+
+If you're testing on Python 2:
+```bash
+pip install pytest pytest-cov backports.tempfile
+pytest --cov=flirpy test
+```
+
 
 
 
