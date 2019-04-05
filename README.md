@@ -1,6 +1,6 @@
 # ![logo](logo.png)
 
-![coverage](coverage.svg)
+![coverage](coverage.svg) [![Documentation Status](https://readthedocs.org/projects/flirpy/badge/?version=latest)](https://flirpy.readthedocs.io/en/latest/?badge=latest)
 
 flirpy is a Python library to interact with FLIR thermal imaging cameras and images.
 

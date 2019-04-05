@@ -4,6 +4,8 @@ develop-eggs/
 dist/
 downloads/
 docs/_build/
+docs/_static/
+docs/_templates/
 eggs/
 .eggs/
 *.egg-info/
