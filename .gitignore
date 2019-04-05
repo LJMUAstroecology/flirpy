@@ -6,6 +6,7 @@ downloads/
 docs/_build/
 docs/_static/
 docs/_templates/
+docs/_sources/
 eggs/
 .eggs/
 *.egg-info/
