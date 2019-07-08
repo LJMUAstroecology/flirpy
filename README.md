@@ -71,10 +71,10 @@ Output images are numbered. If SEQ file 1 contains 1800 frames, the first frame 
 
 Flirpy has been tested with Python 3 and _may_ work on Python 2. It is always recommended that you install packages inside a virtualenv or Conda environment.
 
-Either install using `pip`:
+Either install using `pip` locally (flirpy is not on PyPi yet) by cloning the repository and running:
 
 ``` bash
-pip install flirpy
+pip install .
 ```
 
 Or:
@@ -82,6 +82,8 @@ Or:
 ``` bash
 python setup.py install
 ```
+
+Using `pip` is preferable, as it will let you uninstall the package if you need.
 
 flirpy is distributed with a copy of [Exiftool](https://sno.phy.queensu.ca/~phil/exiftool/) which is used to extract metadata from certain file formats.
 
