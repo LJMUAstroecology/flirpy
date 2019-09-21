@@ -21,7 +21,7 @@ The library has been tested with:
 
 Support for the Lepton is coming soon, but will probably be limited to the Raspberry Pi for the time being.
 
-**It is strongly recommended that you use Python 3"". I have tried to ensure that certain functions are portable between Python 2 and 3, mainly those involved with camera communication (for example if you want to use flirpy with ROS, most of the important stuff works). However, some file IO is hit and miss on Python 2 due to differences in regexes. Python 2 is effectively end of life and while I'd like to support both, it's a low priority. Submit a PR if you like!
+**It is strongly recommended that you use Python 3**. I have tried to ensure that certain functions are portable between Python 2 and 3, mainly those involved with camera communication (for example if you want to use flirpy with ROS, most of the important stuff works). However, some file IO is hit and miss on Python 2 due to differences in regexes. Python 2 is effectively end of life and while I'd like to support both, it's a low priority. Submit a PR if you like!
 
 ## Library organisation
 
@@ -37,7 +37,7 @@ Flirpy includes a convenience utility `split_seqs` for splitting FLIR sequence (
 
 Once installed, you can run:
 
-```
+```bash
 $ split_seqs -h
 usage: split_seqs [-h] [-o OUTPUT] -i INPUT [-v VERBOSITY]
 
@@ -51,7 +51,6 @@ optional arguments:
                         Input file mask
   -v VERBOSITY, --verbosity VERBOSITY
                         Logging level
-
 ```
 
 `split_seqs` accepts either a directory, a specific filename, or a wildcard string (e.g. `"./my/data/flight_*.SEQ"`). If you use wildcards, be sure to enclose the argument in quotes, otherwise your shell will expand the wildcard before running the program and confuse it. If you specify a directoy, all SEQ files in that diretory will be used.
@@ -65,7 +64,6 @@ Files will be extracted to folders with the same base name as the SEQ file, for 
 The tiff images will be geotagged if GPS information is present in the raw data.
 
 Output images are numbered. If SEQ file 1 contains 1800 frames, the first frame from SEQ file 2 will be numbered 1800.
-
 
 ## Installation
 
@@ -110,6 +108,3 @@ pytest --cov=flirpy test
 Some tests are hardware dependent, e.g. for cameras, so expect them to fail unless you own and have a camera to try them with. Hardware tests are skipped by default if the requisite camera is not plugged in.
 
 The repository includes some small representative examples of image files (e.g. SEQ). It is tested and is routinely used with flight data from FLIR Duo cameras, so larger files aren't a problem, but they're too large to include in the repository.
-
-
-

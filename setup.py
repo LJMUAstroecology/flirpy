@@ -19,6 +19,7 @@ setup(
     author_email='j.veitchmichaelis@gmail.com',
     license='MIT',
     long_description=open('README.md').read(),
+    long_description_content_type='text/markdown',
     zip_safe=False,
     include_package_data=True,
     scripts=['scripts/split_seqs'],
