@@ -1,7 +1,8 @@
+
 import numpy as np
+import cv2
 import struct
 import os
-import cv2
 import re
 import mmap
 import tqdm
@@ -22,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 class splitter:
     
-    def __init__(self, output_folder="./", exiftool_path=None, start_index=0, step=1, width=640, height=512):
+    def __init__(self, output_folder="./", exiftool_path=None, start_index=0, step=1, width=640, height=512, split_folders=True):
         
         self.exiftool = Exiftool(exiftool_path)
             
@@ -84,7 +85,7 @@ class splitter:
         
     def _write_tiff(self, filename, data):
         cv2.imwrite(filename, data.astype("uint16"))
-    
+
     def _write_preview(self, filename, data):
         drange = data.max()-data.min()
         preview_data = 255.0*((data-data.min())/drange)

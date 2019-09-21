@@ -11,6 +11,7 @@ if __name__ == "__main__":
     parser.add_argument('-o', '--output', help='Output folder', default="./")
     parser.add_argument('-i', '--input', help='Input file mask', required=True)
     parser.add_argument('-v', '--verbosity', help='Logging level', default=None)
+    parser.add_argument('--no_split_folders', help='Logging level', action='store_true')
 
     args = parser.parse_args()
 
@@ -28,5 +29,5 @@ if __name__ == "__main__":
 
     files = glob.glob(input_mask)
 
-    splitter = flirpy.io.seq.splitter(output_folder)
+    splitter = flirpy.io.seq.splitter(output_folder, split_folders=opt.no_split_folders)
     splitter.process(files)
