@@ -1,4 +1,9 @@
-import cv2
+
+"""
+boson.py
+====================================
+Class for interacting with FLIR Boson cameras
+"""
 from flirpy.camera.core import Core
 import struct
 import ctypes
@@ -7,6 +12,7 @@ from serial.tools import list_ports
 import os
 import sys
 import logging
+import cv2
 
 # FFC Mode enum
 FLR_BOSON_MANUAL_FFC = 0
@@ -60,8 +66,24 @@ import subprocess
 import pkg_resources
 
 class Boson(Core):
+    """
+    Opens a FLIR Boson camera. By default, flirpy will attempt to locate your 
+    camera by its USB PID/VID. You can also force a particular port (if you have two
+    cameras connected, for example) using the port parameter.
 
-    def __init__(self, port=None, baudrate=921600, loglevel=logging.DEBUG):
+    Parameters
+    ---
+        port
+            the serial port of the camera
+        
+        baudate
+            the baudrate to use when connecting to the camera
+        
+        loglevel
+            logging level, default is level is WARNING
+
+    """
+    def __init__(self, port=None, baudrate=921600, loglevel=logging.WARNING):
         self.command_count = 0
         self.cap = None
         self.conn = None
@@ -75,13 +97,16 @@ class Boson(Core):
                 self.connect(port, baudrate)
 
                 if self.conn.is_open:
-                    print("Connected")
+                    self.logger.info("Connected")
 
     def find_serial_device(self):
         """
         Attempts to find and return the serial port that the Boson is connected to.
         
-        Returns: The port, if found. Returns None if not found.
+        Returns
+        -------
+            string
+                serial port name
         """
         port = None
 
@@ -101,7 +126,10 @@ class Boson(Core):
         """
         Attempts to automatically detect which video device corresponds to the Boson by searching for the PID and VID.
 
-        Returns: device number, or None if device not found.
+        Returns
+        -------
+            int
+                device number
         """
 
         res = None
@@ -170,7 +198,18 @@ class Boson(Core):
         """
         Captures and returns an image.
 
-        Returns: the captured image as an array, or None if an error occured.
+        Parameters
+        ----------
+
+            int
+                the device ID for the camera. On a laptop, this is likely to be 1 if
+                you have an internal webcam.
+
+        Returns
+        -------
+            
+            np.array, or None if an error occurred
+                captured image
         """
 
         if self.cap is None:
@@ -191,6 +230,11 @@ class Boson(Core):
     def get_sensor_serial(self):
         """
         Get the serial number of the sensor
+
+        Returns
+        -------
+            int
+                serial number
         """
         function_id = 0x00050006
 
@@ -203,7 +247,10 @@ class Boson(Core):
         """
         Get the camera's software revision.
 
-        Returns: (Major, Minor, Patch)
+        Returns
+        -------
+            tuple (int, int, int)
+                revision (Major, Minor, Patch)
         """
 
         function_id = 0x00050022
@@ -214,7 +261,14 @@ class Boson(Core):
         return struct.Struct(">iii").unpack_from(res)
     
     def get_part_number(self):
+        """
+        Get the camera part number
 
+        Returns
+        -------
+            int
+                part number
+        """
         function_id = 0x00050004
         res = self._send_packet(function_id, receive_size=20)
         res = self._decode_packet(res, receive_size=20)
@@ -244,6 +298,12 @@ class Boson(Core):
 
         flirpy.camera.boson.FLR_BOSON_NO_FFC_PERFORMED
 
+        Returns
+        -------
+
+            int
+                FFC state   
+
         """
         function_id = 0x0005000C
 
@@ -261,6 +321,12 @@ class Boson(Core):
         2 = FLR_BOSON_FFC_IN_PROGRESS
         3 = FLR_BOSON_FFC_COMPLETE
         4 = FLR_BOSON_FFCSTATUS_END
+
+        Returns
+        -------
+
+            int
+                FFC mode
         """
         function_id = 0x00050013
         res = self._send_packet(function_id, receive_size=4)
@@ -290,9 +356,14 @@ class Boson(Core):
 
         return
     
-    def set_ffc_temperature_threshold(self, temp_difference):
+    def set_ffc_temperature_threshold(self, temp_change):
         """
-        Set the change in camera temperature required before an FFC is requested.
+        Set the change in camera temperature (Celsius) required before an FFC is requested.
+
+        Parameters
+        ----------
+            float
+                temperature change in Celsius
         """
         function_id = 0x00050008
         command = struct.pack(">H", int(temp_difference * 10))
@@ -305,7 +376,10 @@ class Boson(Core):
         """
         Get the change in camera temperature before an FFC is requested
 
-        Returns: temperature in Celsius
+        Returns
+        -------
+            float
+                temperature change in Celsius
         """
         function_id = 0x00050009
 
@@ -317,6 +391,11 @@ class Boson(Core):
     def set_ffc_frame_threshold(self, seconds):
         """
         Set the number of seconds before an FFC is requested.
+
+        Parameters
+        ----------
+            int
+                seconds between FFC requests
         """
         function_id = 0x0005000A
         command = struct.pack(">I", seconds)
@@ -363,7 +442,10 @@ class Boson(Core):
         """
         Get the number of frames captured since the camera was turned on.
 
-        Returns: number of frames
+        Returns
+        -------
+            int
+                number of frames
         """
         function_id = 0x00020002
 
@@ -376,7 +458,10 @@ class Boson(Core):
         """
         Get the current focal plane array (FPA) temperature in Celsius.
 
-        Returns: temperature in Celsius
+        Returns
+        -------
+            float
+                FPA temperature in Celsius
         """
         function_id = 0x00050030
 
@@ -389,7 +474,10 @@ class Boson(Core):
         """
         Get the camera serial number 
 
-        Returns: serial number as an integer
+        Returns
+        -------
+            int
+                serial number
         """
         function_id = 0x00050002
 

@@ -62,11 +62,7 @@ class Fff:
     def get_gps(self):
         valid = re.compile("[0-9]{4}[NS]\x00[EW]\x00".encode())
 
-        print(valid)
-        print(self.data)
-
         res = valid.search(self.data)
-        print(res)
         start_pos = res.start()
 
         s = struct.Struct("<4xcxcx4xddf32xcxcx4xff")

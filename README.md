@@ -1,6 +1,6 @@
 # ![logo](logo.png)
 
-![coverage](coverage.svg)
+![coverage](coverage.svg) [![Documentation Status](https://readthedocs.org/projects/flirpy/badge/?version=latest)](https://flirpy.readthedocs.io/en/latest/?badge=latest)
 
 flirpy is a Python library to interact with FLIR thermal imaging cameras and images.
 
@@ -69,10 +69,10 @@ Output images are numbered. If SEQ file 1 contains 1800 frames, the first frame 
 
 Flirpy has been tested with Python 3 and _may_ work on Python 2. It is always recommended that you install packages inside a virtualenv or Conda environment.
 
-Either install using `pip`:
+Either install using `pip` locally (flirpy is not on PyPi yet) by cloning the repository and running:
 
 ``` bash
-pip install flirpy
+pip install .
 ```
 
 Or:
@@ -80,6 +80,8 @@ Or:
 ``` bash
 python setup.py install
 ```
+
+Using `pip` is preferable, as it will let you uninstall the package if you need.
 
 flirpy is distributed with a copy of [Exiftool](https://sno.phy.queensu.ca/~phil/exiftool/) which is used to extract metadata from certain file formats.
 
@@ -99,12 +101,19 @@ You should also install Exiftool manually with `sudo apt install exiftool`.
 
 ## Tests
 
-To run the test suite, install `pytest` and run:
+To run the test suite:
 
 ``` bash
+pip install pytest pytest-cov
 pytest --cov=flirpy test
 ```
 
 Some tests are hardware dependent, e.g. for cameras, so expect them to fail unless you own and have a camera to try them with. Hardware tests are skipped by default if the requisite camera is not plugged in.
 
 The repository includes some small representative examples of image files (e.g. SEQ). It is tested and is routinely used with flight data from FLIR Duo cameras, so larger files aren't a problem, but they're too large to include in the repository.
+
+If you're testing on Python 2:
+```bash
+pip install pytest pytest-cov backports.tempfile
+pytest --cov=flirpy test
+```
