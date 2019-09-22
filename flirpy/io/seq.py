@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 class splitter:
     
-    def __init__(self, output_folder="./", exiftool_path=None, start_index=0, step=1, width=640, height=512, split_folders=True):
+    def __init__(self, output_folder="./", exiftool_path=None, start_index=0, step=1, width=640, height=512, split_folders=True, preview_format="jpg"):
         
         self.exiftool = Exiftool(exiftool_path)
             
@@ -37,8 +37,14 @@ class splitter:
         self.export_preview = True
         self.export_radiometric = True
         self.overwrite = True
-        self.split_folders = True
+        self.split_folders = split_folders
+        self.split_filetypes = True
         self.use_mmap = True
+        
+        if preview_format in ["jpg", "jpeg", "png", "tiff"]:
+            self.preview_format = preview_format
+        else:
+            raise ValueError("Preview format not recognised")
 
         self.output_folder = os.path.expanduser(output_folder)
         Path(self.output_folder).mkdir(exist_ok=True)
@@ -56,10 +62,18 @@ class splitter:
         logger.info("Splitting {} files".format(len(file_list)))
         
         self.frame_count = self.start_index
+
+        folders = []
         
         for seq in tqdm(file_list):
-            subfolder, _ = os.path.splitext(os.path.basename(seq))
-            folder = os.path.join(self.output_folder, subfolder)
+
+            if self.split_folders:
+                subfolder, _ = os.path.splitext(os.path.basename(seq))
+                folder = os.path.join(self.output_folder, subfolder)
+                folders.append(folder)
+            else:
+                folder = self.output_folder
+
             Path(folder).mkdir(exist_ok=True)
 
             logger.info("Splitting {} into {}".format(seq, folder))
@@ -69,19 +83,29 @@ class splitter:
             if self.export_meta:
                 logger.info("Extracting metadata")
 
-                if self.split_folders:
+                if self.split_filetypes:
                     filemask = os.path.join(folder, "raw", "frame_*.fff")
                     copy_filemask = os.path.normpath("./raw/%f.fff")
                     radiometric_folder = os.path.normpath("./radiometric")
+                    preview_folder = os.path.normpath("./preview")
                 else:
                     filemask = os.path.join(folder, "frame_*.fff")
                     copy_filemask = os.path.normpath("%f.fff")
                     radiometric_folder = os.path.normpath("./")
+                    preview_folder = os.path.normpath("./")
 
                 self.exiftool.write_meta(filemask)
 
                 # Copy geotags
-                self.exiftool.copy_meta(folder, filemask=copy_filemask,output_folder=radiometric_folder)
+                if self.export_tiff:
+                    logger.info("Copying tags to radiometric")
+                    self.exiftool.copy_meta(folder, filemask=copy_filemask, output_folder=radiometric_folder, ext="tiff")
+                
+                if self.export_preview:
+                    logger.info("Copying tags to preview")
+                    self.exiftool.copy_meta(folder, filemask=copy_filemask, output_folder=preview_folder, ext=self.preview_format)
+        
+        return folders
         
     def _write_tiff(self, filename, data):
         cv2.imwrite(filename, data.astype("uint16"))
@@ -133,17 +157,17 @@ class splitter:
                 pos.append((index, chunksize))
                 prev_pos = index
                 
-                if self.split_folders:
+                if self.split_filetypes:
                     self._make_split_folders(output_subfolder)
                                      
                     filename_fff = os.path.join(output_subfolder, "raw", "frame_{0:06d}.fff".format(self.frame_count))
                     filename_tiff = os.path.join(output_subfolder, "radiometric", "frame_{0:06d}.tiff".format(self.frame_count))
-                    filename_preview = os.path.join(output_subfolder, "preview", "frame_{0:06d}.png".format(self.frame_count))
+                    filename_preview = os.path.join(output_subfolder, "preview", "frame_{:06d}.{}".format(self.frame_count, self.preview_format))
                     filename_meta = os.path.join(output_subfolder, "raw", "frame_{0:06d}.txt".format(self.frame_count))
                 else:
                     filename_fff = os.path.join(output_subfolder, "frame_{0:06d}.fff".format(self.frame_count))
                     filename_tiff = os.path.join(output_subfolder, "frame_{0:06d}.tiff".format(self.frame_count))
-                    filename_preview = os.path.join(output_subfolder, "frame_{0:06d}.png".format(self.frame_count))
+                    filename_preview = os.path.join(output_subfolder, "frame_{:06d}.{}".format(self.frame_count, self.preview_format))
                     filename_meta = os.path.join(output_subfolder, "frame_{0:06d}.txt".format(self.frame_count))
                 
                 if index == 0:

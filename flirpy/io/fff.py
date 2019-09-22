@@ -22,12 +22,10 @@ class Fff:
         # it's a filename or a file. An FFF file is almost always
         # larger than 2kB.
         if isinstance(data, str) and len(data) < 4096:
-            print("Treating as string")
             with open(data, 'rb') as fff_file:
                 self.filename = fff_file
                 self.data = fff_file.read()
         elif isinstance(data, bytes):
-            print("Treating as bytes")
             self.data = data
         else:
             raise TypeError("Data should be a bytes object or a string filename")

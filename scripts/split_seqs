@@ -40,10 +40,11 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Split all files in folder')
     parser.add_argument('-o', '--output', help='Output folder', default="./")
     parser.add_argument('-i', '--input', help='Input file mask', required=True)
-    parser.add_argument('-v', '--verbosity', help='Logging level', default=None)
+    parser.add_argument('-v', '--verbosity', help='Logging level', default='info')
+    parser.add_argument('--preview_format', help='Output preview format (png, jpg, tiff)', default='jpg')
     parser.add_argument('--rgb_mask', help='If provided, split videos too', default=None)
 
-    add_bool_arg(parser, name='split_folders', help_string='Split output by SEQ name (one folder per SEQ file)', default=True)
+    add_bool_arg(parser, name='merge_folders', help_string='Merge output folders (and remove intermediates afterwards)', default=True)
     add_bool_arg(parser, name='split_filetypes', help_string='Split output files by type (make raw/preview/radiometric folders)', default=True)
     add_bool_arg(parser, name='export_meta', help_string='Export meta information files (also for geotagging)', default=True)
     add_bool_arg(parser, name='export_tiff', help_string='Export radiometric tiff files', default=True)
@@ -51,7 +52,7 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    if args.verbosity is not None:
+    if args.verbosity is not 'quiet':
         numeric_level = getattr(logging, args.verbosity.upper(), None)
         if not isinstance(numeric_level, int):
             raise ValueError('Invalid log level: %s' % args.verbosity)
@@ -67,7 +68,7 @@ if __name__ == "__main__":
     
     print("Input files: ", files)
  
-    splitter = flirpy.io.seq.splitter(output_folder)
+    splitter = flirpy.io.seq.splitter(output_folder, preview_format=args.preview_format)
     splitter.split_filetypes = args.split_filetypes
     splitter.export_meta = args.export_meta
     splitter.export_tiff = args.export_tiff
@@ -75,9 +76,7 @@ if __name__ == "__main__":
 
     folders = splitter.process(files)
 
-    folders = [os.path.abspath(os.path.join(output_folder, a.split(".SEQ")[0])) for a in files]
-
-    if args.split_folders is False:
+    if args.merge_folders:
         print("Merging folders")
         for folder in tqdm(folders):
             print("Copying: {}".format(folder))
@@ -85,7 +84,7 @@ if __name__ == "__main__":
             shutil.rmtree(folder)
 
     if args.rgb_mask:
-        os.makedirs(os.path.join(output_folder, "rgb"))
+        os.makedirs(os.path.join(output_folder, "rgb"), exist_ok=True)
         video_files = natsort.natsorted(glob.glob(args.rgb_mask))
         frame_i = 0
         for video in tqdm(video_files):

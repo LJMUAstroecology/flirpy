@@ -70,7 +70,7 @@ class Exiftool:
 
         cmd = [self.path]
         cmd += files
-        cmd.append("-w")
+        cmd.append("-w!")
         cmd.append(".txt")
 
         logger.debug(" ".join(cmd))

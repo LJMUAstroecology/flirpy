@@ -1,10 +1,10 @@
+import cv2
 from flirpy.camera.core import Core
 import struct
 import ctypes
 import binascii
 from serial.tools import list_ports
 import os
-import cv2
 import sys
 import logging
 
