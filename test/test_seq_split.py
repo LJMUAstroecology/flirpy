@@ -60,7 +60,7 @@ class TestSeqSplit:
     def test_process_seq_no_split(self):
         self.sp = splitter(self.output_folder)
 
-        self.sp.split_folders = False
+        self.sp.split_filetypes = False
         self.sp.process(self.test_data_path)
 
         assert os.path.exists(os.path.join(self.output_folder, "test", "raw")) is False

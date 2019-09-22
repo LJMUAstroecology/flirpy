@@ -11,7 +11,7 @@ with Boson() as camera:
 def test_open_boson():
    camera = Boson()
    camera.close()
-        
+
 def test_get_serial():
     with Boson() as camera:
         assert camera.get_camera_serial() != 0
@@ -36,7 +36,7 @@ def test_get_part_number():
     with Boson() as camera:
         pn = camera.get_part_number()
         assert pn != ""
-        
+
 def test_ffc_request():
     with Boson() as camera:
 
@@ -87,7 +87,7 @@ def test_capture_windows():
     with Boson() as camera:
         # Currently have no way of figuring this out
         res = camera.grab(1)
-        
+
         assert res is not None
         assert len(res.shape) == 2
         assert res.dtype == "uint16"
@@ -96,7 +96,8 @@ def test_capture_windows():
 def test_capture_unix():
     with Boson() as camera:
         res = camera.grab()
-        
+
         assert res is not None
         assert len(res.shape) == 2
         assert res.dtype == "uint16"
+
