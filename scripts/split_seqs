@@ -5,13 +5,49 @@ import glob
 import argparse
 import os
 import logging
+import natsort
+import cv2
+import shutil
+from tqdm import tqdm
+
+def add_bool_arg(parser, name, help_string="", default=False):
+    # https://stackoverflow.com/a/31347222
+    group = parser.add_mutually_exclusive_group(required=False)
+    group.add_argument('--' + name, dest=name, help=help_string, action='store_true')
+    group.add_argument('--no_' + name, dest=name, help=help_string, action='store_false')
+    parser.set_defaults(**{name:default})
+
+def recursive_copy(src, dst):
+
+    items = os.listdir(src)
+
+    for item in items:
+
+        item_path = os.path.join(src, item)
+        new_dst = os.path.abspath(os.path.join(dst, item))
+
+        if os.path.isfile(item_path):
+            shutil.copy(item_path, new_dst)
+
+        elif os.path.isdir(item_path):
+            os.makedirs(new_dst, exist_ok=True)
+            recursive_copy(item_path, new_dst)
+    
+    return
 
 if __name__ == "__main__":
+    
     parser = argparse.ArgumentParser(description='Split all files in folder')
     parser.add_argument('-o', '--output', help='Output folder', default="./")
     parser.add_argument('-i', '--input', help='Input file mask', required=True)
     parser.add_argument('-v', '--verbosity', help='Logging level', default=None)
-    parser.add_argument('--no_split_folders', help='Logging level', action='store_true')
+    parser.add_argument('--rgb_mask', help='If provided, split videos too', default=None)
+
+    add_bool_arg(parser, name='split_folders', help_string='Split output by SEQ name (one folder per SEQ file)', default=True)
+    add_bool_arg(parser, name='split_filetypes', help_string='Split output files by type (make raw/preview/radiometric folders)', default=True)
+    add_bool_arg(parser, name='export_meta', help_string='Export meta information files (also for geotagging)', default=True)
+    add_bool_arg(parser, name='export_tiff', help_string='Export radiometric tiff files', default=True)
+    add_bool_arg(parser, name='export_preview', help_string='Export 8-bit preview png files', default=True)
 
     args = parser.parse_args()
 
@@ -20,14 +56,43 @@ if __name__ == "__main__":
         if not isinstance(numeric_level, int):
             raise ValueError('Invalid log level: %s' % args.verbosity)
         logging.basicConfig(level=numeric_level)
-
-    output_folder = args.output
+    
+    output_folder = os.path.abspath(args.output)
     input_mask = args.input
 
     if output_folder is not "./":
         os.makedirs(output_folder, exist_ok=True)
 
-    files = glob.glob(input_mask)
+    files = natsort.natsorted(glob.glob(input_mask))
+    
+    print("Input files: ", files)
+ 
+    splitter = flirpy.io.seq.splitter(output_folder)
+    splitter.split_filetypes = args.split_filetypes
+    splitter.export_meta = args.export_meta
+    splitter.export_tiff = args.export_tiff
+    splitter.export_preview = args.export_preview
 
-    splitter = flirpy.io.seq.splitter(output_folder, split_folders=opt.no_split_folders)
-    splitter.process(files)
+    folders = splitter.process(files)
+
+    folders = [os.path.abspath(os.path.join(output_folder, a.split(".SEQ")[0])) for a in files]
+
+    if args.split_folders is False:
+        print("Merging folders")
+        for folder in tqdm(folders):
+            print("Copying: {}".format(folder))
+            recursive_copy(folder, output_folder)
+            shutil.rmtree(folder)
+
+    if args.rgb_mask:
+        os.makedirs(os.path.join(output_folder, "rgb"))
+        video_files = natsort.natsorted(glob.glob(args.rgb_mask))
+        frame_i = 0
+        for video in tqdm(video_files):
+            cap = cv2.VideoCapture(video)
+
+            while cap.grab():
+                _, frame = cap.retrieve()
+                out_path = os.path.join(output_folder, "rgb", "rgb_frame_{:06d}.jpg".format(frame_i))
+                cv2.imwrite(out_path, frame)
+                frame_i += 1
