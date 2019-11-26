@@ -49,7 +49,7 @@ class splitter:
         if isinstance(file_list, str):
             file_list = [file_list]
 
-        file_list = [os.path.expanduser(f) for f in file_list]
+        file_list = [os.path.abspath(os.path.expanduser(f)) for f in file_list]
 
         logger.info("Merging {} files".format(len(file_list)))
         files = self._merge_files(file_list, self.output_folder)
@@ -68,10 +68,12 @@ class splitter:
         
         serial = "mavlink"
         
-        if check_gps(input_file, "nmea"):
+        if self._check_gps(input_file, "nmea"):
             serial = "nmea"
-        elif check_gps(input_file, "mavlink"):
+            logger.info("NMEA GPS")
+        elif self._check_gps(input_file, "mavlink"):
             serial = "mavlink"
+            logger.info("mavlink GPS")
         
         args = "-i {} -expa {} -exfo tif -exfn image -exmeta CSVpf -serial {} -c".format(input_file, output_folder, serial)
         cmd = [self.thermoviewer_path]
@@ -106,7 +108,7 @@ class splitter:
                 except KeyboardInterrupt:
                     _kill(proc.pid)
 
-    def check_gps(self, input_file, serial="nmea"):
+    def _check_gps(self, input_file, serial="nmea"):
         """
         Checks an input TMC or TFC file for meta data which can either be
         provided from mavlink or nmea.
@@ -136,7 +138,7 @@ class splitter:
         else:
             return True
 
-    def _merge_files(self, file_list, output_folder, filename="merged"):
+    def _merge_files(self, input_files, output_folder, filename="merged"):
         """
         Given a folder, merge all the split "videos" into a single file.
 
@@ -148,14 +150,24 @@ class splitter:
         else:
             ext = "tfc"
 
-        output_file = output_folder + "/{}.{}".format(filename, ext)
+        output_file = os.path.join(output_folder, "{}.{}".format(filename, ext))
 
-        args = "-exfn {} -merge {} -c".format(output_file, file_list)
+        try:
+            total_size = sum([os.path.getsize(f) for f in input_files])
+        except:
+            print("Failed to get size: {}".format(input_files))
+            total_size=0
+        
+        file_list = " ".join(input_files)
+
+        args = "-exfn {} -c -merge {}".format(output_file, file_list)
         cmd = [self.thermoviewer_path]
         cmd += args.split(' ')
+        print(cmd)
+        logger.info(" ".join(cmd))
         proc = subprocess.Popen(cmd)
         
-        logger.info("Merging input folder {} to {}: ".format(input_folder, output_file))
+        logger.info("Merging inputs to {}: ".format(output_file))
         
         with tqdm(total=total_size, unit='B', unit_scale=True, unit_divisor=1024) as pbar:    
             prev_size = 0
