@@ -52,9 +52,14 @@ class splitter:
         file_list = [os.path.abspath(os.path.expanduser(f)) for f in file_list]
 
         logger.info("Merging {} files".format(len(file_list)))
-        files = self._merge_files(file_list, self.output_folder)
+
+        working_folder = tempfile.gettempdir()
+        os.makedirs(working_folder, exist_ok=True)
+
+        merge_file = self._merge_files(file_list, working_folder)
         logger.info("Splitting files to: {}".format(self.output_folder))
-        self._process_teax(files, self.output_folder)
+        self._process_teax(merge_file, self.output_folder)
+        shutil.rmtree(working_folder)
 
     def _process_teax(self, input_file, output_folder):
         """
@@ -150,7 +155,7 @@ class splitter:
         else:
             ext = "tfc"
 
-        output_file = os.path.join(output_folder, "{}.{}".format(filename, ext))
+        output_file = os.path.abspath(os.path.join(output_folder, "{}.{}".format(filename, ext)))
 
         try:
             total_size = sum([os.path.getsize(f) for f in input_files])
@@ -163,7 +168,6 @@ class splitter:
         args = "-exfn {} -c -merge {}".format(output_file, file_list)
         cmd = [self.thermoviewer_path]
         cmd += args.split(' ')
-        print(cmd)
         logger.info(" ".join(cmd))
         proc = subprocess.Popen(cmd)
         
