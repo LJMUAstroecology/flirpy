@@ -9,6 +9,7 @@ import tempfile
 from tqdm import tqdm
 import subprocess
 import logging
+import cv2
 
 try:
   from pathlib import Path
@@ -53,12 +54,13 @@ class splitter:
 
         logger.info("Merging {} files".format(len(file_list)))
 
-        working_folder = tempfile.gettempdir()
+        working_folder = os.path.join(tempfile.gettempdir(), "flirpy")
         os.makedirs(working_folder, exist_ok=True)
 
         merge_file = self._merge_files(file_list, working_folder)
         logger.info("Splitting files to: {}".format(self.output_folder))
         self._process_teax(merge_file, self.output_folder)
+        self._post_process(self.output_folder)
         shutil.rmtree(working_folder)
 
     def _process_teax(self, input_file, output_folder):
@@ -96,7 +98,7 @@ class splitter:
                 try:
                     retcode = proc.poll()
                     if retcode is not None: # Process finished.
-                        print("Done split.")
+                        logger.info("Done split.")
                         break
                     else: # No process is done, wait a bit and check again.
                         time.sleep(2)
@@ -160,7 +162,7 @@ class splitter:
         try:
             total_size = sum([os.path.getsize(f) for f in input_files])
         except:
-            print("Failed to get size: {}".format(input_files))
+            logger.warn("Failed to get size: {}".format(input_files))
             total_size=0
         
         file_list = " ".join(input_files)
@@ -197,6 +199,40 @@ class splitter:
                     _kill(proc.pid)
             
         return os.path.normpath(output_file)
+
+    def _post_process(self, folder):
+        # Output directories
+        rgb_folder = os.path.join(folder, "rgb") 
+        os.makedirs(rgb_folder, exist_ok=True)
+
+        radiometric_folder = os.path.join(folder, "radiometric")
+        os.makedirs(radiometric_folder, exist_ok=True)
+
+        preview_folder = os.path.join(folder, "preview")
+        os.makedirs(preview_folder, exist_ok=True)
+
+        # Convert raw files
+        for raw in glob.glob(os.path.join(folder, "*.tiff")):
+
+            base, ext = os.path.splitext(os.path.basename(raw))
+            output_name = base+".png"
+
+            raw_im = cv2.imread(raw, cv2.IMREAD_UNCHANGED).astype(np.float32)
+            raw_range = raw_im.max() - raw_im.min()
+            converted = 255*(raw_im - raw_im.min())/raw_range
+            cv2.imwrite(os.path.join(preview_folder, output_name), converted.astype(np.uint8))
+
+            raw_basename = os.path.basename(raw)
+            shutil.move(raw, os.path.join(radiometric_folder, raw_basename))
+
+        for rgb in glob.glob(os.path.join(folder, "*.jpg")):
+            dst_basename = os.path.basename(rgb)
+            shutil.move(rgb, os.path.join(rgb_folder, dst_basename))
+
+        for meta in glob.glob(os.path.join(folder, "*.csv")):
+            meta_basename = os.path.basename(meta)
+            shutil.move(meta, os.path.join(radiometric_folder, meta_basename))
+        
 
 def find_folders(path):
     """
