@@ -13,6 +13,7 @@ import os
 import sys
 import logging
 import cv2
+import pyudev
 
 # FFC Mode enum
 FLR_BOSON_MANUAL_FFC = 0
@@ -152,15 +153,34 @@ class Boson(Core):
                     return device_id
             
         else:
-            path = "/sys/class/video4linux/"
-            devices = [os.path.join(path, device) for device in os.listdir(path)]
-            
-            for device in devices:
-                with open(os.path.join(device, "name"), 'r') as d:
-                    device_name = d.read()
+            context = pyudev.Context()
+            devices = pyudev.Enumerator(context)
 
-                    if device_name == "Boson: FLIR Video\n":
-                        return int(device[-1])
+            print(Boson().find_serial_device())
+
+            path = "/sys/class/video4linux/"
+            video_devices = [os.path.join(path, device) for device in os.listdir(path)]
+            dev = []
+            for i, device in enumerate(video_devices):
+                udev = pyudev.Devices.from_path(context, device)
+
+                try:
+                    vid = udev.get('ID_VENDOR_ID')
+                    pid = udev.get('ID_MODEL_ID')
+
+                    if vid == "09cb" and pid == "4007":
+                        dev.append(i)
+                except KeyError:
+                    pass
+            
+            # For some reason multiple devices can show up
+            for d in dev:
+                cam = cv2.VideoCapture(d + cv2.CAP_V4L2)
+                data = cam.read()
+                if data is not None:
+                    res = d
+                    break
+                cam.release()
 
         return res
         
@@ -187,7 +207,7 @@ class Boson(Core):
             self.cap = cv2.VideoCapture(device_id)
 
         if not self.cap.isOpened():
-           raise IOError("Failed to open capture device")
+           raise IOError("Failed to open capture device {}".format(device_id))
         
         # The order of these calls matters!
         self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y16 "))
@@ -211,6 +231,9 @@ class Boson(Core):
             np.array, or None if an error occurred
                 captured image
         """
+
+        if device_id is None:
+            device_id = self.find_video_device()
 
         if self.cap is None:
             self.setup_video(device_id)
@@ -366,7 +389,7 @@ class Boson(Core):
                 temperature change in Celsius
         """
         function_id = 0x00050008
-        command = struct.pack(">H", int(temp_difference * 10))
+        command = struct.pack(">H", int(temp_change * 10))
         res = self._send_packet(function_id, data=command)
         res = self._decode_packet(res)
 

@@ -86,7 +86,7 @@ def test_ffc_mode_auto():
 def test_capture_windows():
     with Boson() as camera:
         # Currently have no way of figuring this out
-        res = camera.grab(1)
+        res = camera.grab()
 
         assert res is not None
         assert len(res.shape) == 2
