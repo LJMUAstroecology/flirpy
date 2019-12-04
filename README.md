@@ -69,7 +69,13 @@ Output images are numbered. If SEQ file 1 contains 1800 frames, the first frame 
 
 Flirpy has been tested with Python 3 and _may_ work on Python 2. It is always recommended that you install packages inside a virtualenv or Conda environment.
 
-Either install using `pip` locally (flirpy is not on PyPi yet) by cloning the repository and running:
+Simply install using `pip`:
+
+```
+pip install flirpy
+```
+
+Or you can clone the repository and run:
 
 ``` bash
 pip install .
@@ -98,6 +104,8 @@ pip3 install -r requirements.txt
 You may need to install some dependencies for OpenCV, for example `libjasper-dev`.
 
 You should also install Exiftool manually with `sudo apt install exiftool`.
+
+If you're on a platorm like Arm64 where `opencv-python-headless` is not available, then bad luck, you need to build OpenCV from scratch. This is straightforward nowadays, but it's a bit involved.
 
 ## Tests
 
