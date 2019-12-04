@@ -163,8 +163,8 @@ class Boson(Core):
                 udev = pyudev.Devices.from_path(context, device)
 
                 try:
-                    vid = udev.get('ID_VENDOR_ID')
-                    pid = udev.get('ID_MODEL_ID')
+                    vid = udev.properties['ID_VENDOR_ID']
+                    pid = udev.properties['ID_MODEL_ID']
 
                     if vid == "09cb" and pid == "4007":
                         dev.append(i)
@@ -191,10 +191,13 @@ class Boson(Core):
         """
 
         if device_id is None:
+            self.logger.debug("Locating cameras")
             device_id = self.find_video_device()
         
         if device_id is None:
             raise ValueError("Boson not connected.")
+        else:
+            self.logger.debug("Located camera at {}".format(device_id))
 
         if sys.platform.startswith('linux'):
             self.cap = cv2.VideoCapture(device_id + cv2.CAP_V4L2)
@@ -229,9 +232,6 @@ class Boson(Core):
             np.array, or None if an error occurred
                 captured image
         """
-
-        if device_id is None:
-            device_id = self.find_video_device()
 
         if self.cap is None:
             self.setup_video(device_id)
