@@ -156,8 +156,6 @@ class Boson(Core):
             context = pyudev.Context()
             devices = pyudev.Enumerator(context)
 
-            print(Boson().find_serial_device())
-
             path = "/sys/class/video4linux/"
             video_devices = [os.path.join(path, device) for device in os.listdir(path)]
             dev = []
