@@ -39,7 +39,7 @@ class TestSeqSplit:
 
         assert len(glob.glob(os.path.join(self.output_folder, "test", "raw", "*.fff"))) > 0
         assert len(glob.glob(os.path.join(self.output_folder, "test", "raw", "*.txt"))) > 0
-        assert len(glob.glob(os.path.join(self.output_folder, "test", "preview", "*.png"))) > 0
+        assert len(glob.glob(os.path.join(self.output_folder, "test", "preview", "*.jpg"))) > 0
         assert len(glob.glob(os.path.join(self.output_folder, "test", "radiometric", "*.tiff"))) > 0
 
     def test_raw_is_16_bit(self):
@@ -69,5 +69,5 @@ class TestSeqSplit:
         
         assert len(glob.glob(os.path.join(self.output_folder, "test", "*.fff"))) > 0
         assert len(glob.glob(os.path.join(self.output_folder, "test", "*.txt"))) > 0
-        assert len(glob.glob(os.path.join(self.output_folder, "test", "*.png"))) > 0
+        assert len(glob.glob(os.path.join(self.output_folder, "test", "*.jpg"))) > 0
         assert len(glob.glob(os.path.join(self.output_folder, "test", "*.tiff"))) > 0
