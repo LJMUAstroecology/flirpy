@@ -13,7 +13,6 @@ import os
 import sys
 import logging
 import cv2
-import pyudev
 
 # FFC Mode enum
 FLR_BOSON_MANUAL_FFC = 0
@@ -153,6 +152,8 @@ class Boson(Core):
                     return device_id
             
         else:
+            import pyudev
+
             context = pyudev.Context()
             devices = pyudev.Enumerator(context)
 

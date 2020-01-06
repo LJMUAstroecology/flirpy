@@ -99,6 +99,12 @@ You may need to install some dependencies for OpenCV, for example `libjasper-dev
 
 You should also install Exiftool manually with `sudo apt install exiftool`.
 
+## Driver problems on Windows
+
+Occasionally Windows can do some bizarre things and forget that USB devices are cameras. This will stop the camera from being discoverable by flirpy (and usable by software including OpenCV).
+
+You can solve this by going to device manager, right clicking on the USB device and selecting "Update Driver". Choose "Browse my computer ... " and then "Let me pick ... ". Choose the "USB Video Device" driver.
+
 ## Tests
 
 To run the test suite:

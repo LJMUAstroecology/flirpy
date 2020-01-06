@@ -12,6 +12,26 @@ def test_open_boson():
    camera = Boson()
    camera.close()
 
+@pytest.mark.skipif(os.name != "nt", reason="Skipping Windows-only test")
+def test_capture_windows():
+    with Boson() as camera:
+        # Currently have no way of figuring this out
+        res = camera.grab()
+
+        assert res is not None
+        assert len(res.shape) == 2
+        assert res.dtype == "uint16"
+
+@pytest.mark.skipif(os.name == "nt", reason="Skipping on Windows")
+def test_capture_unix():
+    with Boson() as camera:
+        res = camera.grab()
+
+        assert res is not None
+        assert len(res.shape) == 2
+        assert res.dtype == "uint16"
+
+
 def test_get_serial():
     with Boson() as camera:
         assert camera.get_camera_serial() != 0
@@ -80,24 +100,4 @@ def test_ffc_mode_auto():
         camera.set_ffc_auto()
         mode = camera.get_ffc_mode()
         assert mode == flirpy.camera.boson.FLR_BOSON_AUTO_FFC
-
-
-@pytest.mark.skipif(os.name != "nt", reason="Skipping Windows-only test")
-def test_capture_windows():
-    with Boson() as camera:
-        # Currently have no way of figuring this out
-        res = camera.grab()
-
-        assert res is not None
-        assert len(res.shape) == 2
-        assert res.dtype == "uint16"
-
-@pytest.mark.skipif(os.name == "nt", reason="Skipping on Windows")
-def test_capture_unix():
-    with Boson() as camera:
-        res = camera.grab()
-
-        assert res is not None
-        assert len(res.shape) == 2
-        assert res.dtype == "uint16"
 
