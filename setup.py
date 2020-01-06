@@ -7,7 +7,7 @@ import platform
 # Opencv headless not available on ARM platforms, need to manual install
 if platform.machine() in ["arm", "aarch64", "aarch64_be", "armv8b", "armv8l"]:
     install_requires=['pyserial', 'tqdm', 'numpy']
-    
+
     print("System detected as ARM. This library depends on OpenCV, which is not \
            available as a wheel yet so you will need to build from scratch. If you're running \
            aarch64, you can try 'pip install opencv-python-aarch64' but this is not officially supported.")

@@ -60,3 +60,4 @@ find_cameras/find_cameras/Debug
 find_cameras/find_cameras/vcxproj.user
 *.suo
 *VC.db
+flirpy-*
