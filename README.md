@@ -18,8 +18,11 @@ The library has been tested with:
 * FLIR Boson (serial and image capture)
 * FLIR Duo Pro R (image post-processing)
 * TeAx Fusion Zoom (image post-processing)
+* FLIR Lepton (PureThermal board, capture+telemetry only)
 
-Support for the Lepton is coming soon, but will probably be limited to the Raspberry Pi for the time being.
+Coming soon
+
+* FLIR Lepton low level (SPI)
 
 **It is strongly recommended that you use Python 3**. I have tried to ensure that certain functions are portable between Python 2 and 3, mainly those involved with camera communication (for example if you want to use flirpy with ROS, most of the important stuff works). However, some file IO is hit and miss on Python 2 due to differences in regexes. Python 2 is effectively end of life and while I'd like to support both, it's a low priority. Submit a PR if you like!
 
