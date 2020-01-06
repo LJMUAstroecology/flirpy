@@ -24,30 +24,35 @@ CAM_FEATURE_NOT_ENABLED= 0x0A
 
 log = logging.getLogger()
 
-class tau:
+class Tau:
 
     def __enter__(self):
         return self
     
     def __exit__(self, type, value, traceback):
-        self.conn.close()
+        if self.conn is not None:
+            self.conn.close()
         log.info("Disconnecting from camera.")
 
-    def __init__(self, port, baud=921600):
+    def __init__(self, port=None, baud=921600):
         log.info("Connecting to camera.")
-        self.conn = serial.Serial(port=port, baudrate=baud)
 
-        if self.conn.is_open:
-            log.info("Connected to camera at {}.".format(port))
+        if port is not None:
+            self.conn = serial.Serial(port=port, baudrate=baud)
 
-            self.conn.flushInput()
-            self.conn.flushOutput()
-            self.conn.timeout = 1
+            if self.conn.is_open:
+                log.info("Connected to camera at {}.".format(port))
 
-            self.conn.read(self.conn.in_waiting)
+                self.conn.flushInput()
+                self.conn.flushOutput()
+                self.conn.timeout = 1
+
+                self.conn.read(self.conn.in_waiting)
+            else:
+                log.critical("Couldn't connect to camera!")
+                raise IOError
         else:
-            log.critical("Couldn't connect to camera!")
-            raise IOError
+            self.conn = None
             
     
     def ping(self):
