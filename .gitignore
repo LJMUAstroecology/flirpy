@@ -53,3 +53,10 @@ pip-delete-this-directory.txt
 .webassets-cache
 .vscode
 .vs
+find_cameras/Release
+find_cameras/Debug
+find_cameras/find_cameras/Release
+find_cameras/find_cameras/Debug
+find_cameras/find_cameras/vcxproj.user
+*.suo
+*VC.db
