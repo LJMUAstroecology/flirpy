@@ -119,6 +119,25 @@ image = camera.grab()
 camera.close()
 ```
 
+If you're using a PureThermal Lepton you can also check frame telemetry if enabled:
+
+```python
+camera.major_version
+camera.minor_version
+camera.uptime_ms
+camera.status # see datasheet
+camera.revision
+camera.frame_count
+camera.frame_mean # too low?
+camera.fpa_temp_k
+camera.ffc_temp_k
+camera.ffc_elapsed_ms
+camera.agc_roi
+camera.clip_high
+camera.clip_low
+camera.video_format
+```
+
 Flirpy automatically locates your camera and captures a 16-bit (raw) image:
 
 ``` python

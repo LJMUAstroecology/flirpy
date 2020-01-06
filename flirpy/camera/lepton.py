@@ -3,6 +3,7 @@ import sys
 import pkg_resources
 import subprocess
 import cv2
+import struct
 import logging
 
 class Lepton(Core):
@@ -104,8 +105,30 @@ class Lepton(Core):
         self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y16 "))
         self.cap.set(cv2.CAP_PROP_CONVERT_RGB, False)
         
+    def decode_telemetry(self, image, mode="footer"):
+        """
+        Extracts telemetry from an image
+        """
+        res = struct.unpack("<2cII16x4h6xIh2xh8xhI4xhhhhhh64xI172x", image[-2,:])
 
-    def grab(self, device_id=None):
+        self.telemetry = res
+
+        self.major_version = res[0]
+        self.minor_version = res[1]
+        self.uptime_ms = res[2]
+        self.status = res[3]
+        self.revision = res[4:8]
+        self.frame_count = res[8]
+        self.frame_mean = res[9]
+        self.fpa_temp_k = res[10]/100.
+        self.ffc_temp_k = res[11]/100.
+        self.ffc_elapsed_ms = res[12]
+        self.agc_roi = res[13:17]
+        self.agc_clip_high = res[17]
+        self.agc_clip_low = res[18]
+        self.vudeo_format = res[19]
+        
+    def grab(self, device_id=None, telemetry_mode="footer", strip_telemetry=True):
         """
         Captures and returns an image.
 
@@ -128,5 +151,13 @@ class Lepton(Core):
 
         if self.cap is None:
             self.setup_video(device_id)
-        
-        return self.cap.read()[1]
+
+        res, image = self.cap.read()
+
+        if res:
+            self.decode_telemetry(image, telemetry_mode)
+
+            if strip_telemetry:
+                image = image[:-2,:]
+
+        return image
