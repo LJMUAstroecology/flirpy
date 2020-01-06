@@ -4,3 +4,4 @@ tqdm > 4.29
 numpy
 pytest
 pyudev
+psutil
