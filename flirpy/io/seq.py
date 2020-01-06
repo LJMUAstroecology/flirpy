@@ -1,7 +1,6 @@
 
 import numpy as np
 import cv2
-import struct
 import os
 import re
 import mmap
