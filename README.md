@@ -99,6 +99,28 @@ You may need to install some dependencies for OpenCV, for example `libjasper-dev
 
 You should also install Exiftool manually with `sudo apt install exiftool`.
 
+## Grab images
+
+Here's a very simple example of grabbing an image using a Boson or Lepton:
+    
+``` python
+from flirpy.camera.lepton import Lepton
+
+camera = Lepton()
+image = camera.grab()
+camera.close()
+```
+
+Flirpy automatically locates your camera and captures a 16-bit (raw) image:
+
+``` python
+from flirpy.camera.boson import Boson
+
+camera = Boson()
+image = camera.grab()
+camera.close()
+```
+
 ## Driver problems on Windows
 
 Occasionally Windows can do some bizarre things and forget that USB devices are cameras. This will stop the camera from being discoverable by flirpy (and usable by software including OpenCV).
