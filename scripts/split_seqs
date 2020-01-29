@@ -9,6 +9,7 @@ import natsort
 import cv2
 import shutil
 from tqdm import tqdm
+import time
 
 def add_bool_arg(parser, name, help_string="", default=False):
     # https://stackoverflow.com/a/31347222
@@ -43,6 +44,9 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--verbosity', help='Logging level', default='info')
     parser.add_argument('--preview_format', help='Output preview format (png, jpg, tiff)', default='jpg')
     parser.add_argument('--rgb_mask', help='If provided, split videos too', default=None)
+    parser.add_argument('--jpeg_quality', help='RGB Output quality (0-100)', type=int, default=50)
+    parser.add_argument('--use_gstreamer', help='Use Gstreamer for video decoding', action='store_true')
+    parser.add_argument('--rgb_fps', help='RGB framerate if different from thermal', type=float, default=29.7)
 
     add_bool_arg(parser, name='merge_folders', help_string='Merge output folders (and remove intermediates afterwards)', default=True)
     add_bool_arg(parser, name='split_filetypes', help_string='Split output files by type (make raw/preview/radiometric folders)', default=True)
@@ -51,6 +55,8 @@ if __name__ == "__main__":
     add_bool_arg(parser, name='export_preview', help_string='Export 8-bit preview png files', default=True)
 
     args = parser.parse_args()
+
+    logger = logging.getLogger(__name__)
 
     if args.verbosity is not 'quiet':
         numeric_level = getattr(logging, args.verbosity.upper(), None)
@@ -66,8 +72,9 @@ if __name__ == "__main__":
 
     files = natsort.natsorted(glob.glob(input_mask))
     
-    print("Input files: ", files)
- 
+    for f in files:
+        logger.info("Loading: {}".format(f))
+    
     splitter = flirpy.io.seq.splitter(output_folder, preview_format=args.preview_format)
     splitter.split_filetypes = args.split_filetypes
     splitter.export_meta = args.export_meta
@@ -75,23 +82,44 @@ if __name__ == "__main__":
     splitter.export_preview = args.export_preview
 
     folders = splitter.process(files)
-
+ 
     if args.merge_folders:
-        print("Merging folders")
+        logger.info("Merging folders")
         for folder in tqdm(folders):
-            print("Copying: {}".format(folder))
+            logger.info("Copying: {}".format(folder))
             recursive_copy(folder, output_folder)
             shutil.rmtree(folder)
-
+    
     if args.rgb_mask:
         os.makedirs(os.path.join(output_folder, "rgb"), exist_ok=True)
         video_files = natsort.natsorted(glob.glob(args.rgb_mask))
         frame_i = 0
+
+        for f in video_files:
+            logger.info("Loading: {}".format(f))
+
         for video in tqdm(video_files):
-            cap = cv2.VideoCapture(video)
+
+            if args.use_gstreamer:
+                pipeline = "gst-launch-1.0 -e -v filesrc location={} ! qtdemux ! decodebin ! appsink".format(video)
+                cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
+            else:
+                cap = cv2.VideoCapture(video)
 
             while cap.grab():
                 _, frame = cap.retrieve()
-                out_path = os.path.join(output_folder, "rgb", "rgb_frame_{:06d}.jpg".format(frame_i))
-                cv2.imwrite(out_path, frame)
+
+                # Compute matching thermal frame
+                thermal_i = int(round(frame_i*30.0/args.rgb_fps))
+                thermal_j = int(round((frame_i + 1)*30.0/args.rgb_fps))
+
+                out_path = os.path.join(output_folder, "rgb", "rgb_frame_{:06d}.jpg".format(thermal_i))
+                cv2.imwrite(out_path, frame, [cv2.IMWRITE_JPEG_QUALITY, args.jpeg_quality])
+
                 frame_i += 1
+                
+                # Add a duplicate frame if necessary
+                if thermal_j - thermal_i > 1:
+                    logger.debug("Insert duplicate frame at {}".format(thermal_i+1))
+                    out_path = os.path.join(output_folder, "rgb", "rgb_frame_{:06d}.jpg".format(thermal_i+1))
+                    cv2.imwrite(out_path, frame, [cv2.IMWRITE_JPEG_QUALITY, args.jpeg_quality])
