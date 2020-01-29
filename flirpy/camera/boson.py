@@ -210,6 +210,10 @@ class Boson(Core):
 
         if not self.cap.isOpened():
            raise IOError("Failed to open capture device {}".format(device_id))
+
+        # Attempt to set 320x256 which only has an effect on the Boson 320
+        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH,320)
+        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT,256)
         
         # The order of these calls matters!
         self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y16 "))
