@@ -13,6 +13,7 @@ import os
 import sys
 import logging
 import cv2
+import time
 
 # FFC Mode enum
 FLR_BOSON_MANUAL_FFC = 0
@@ -511,25 +512,21 @@ class Boson(Core):
         res = self._decode_packet(res, receive_size=4)
 
         return struct.unpack(">I", res)[0]
-
-    def _crc(self, data):
-        """
-        Full CRC with escape bytes (ugh)
-        """
-        pass
     
     def _decode_packet(self, data, receive_size=0):
         """
         Decodes a data packet from the camera.
         """
-
         payload = None
+        payload_len = len(data) - 17
 
-        if receive_size > 0:
-            frame = struct.Struct(">BBIII{}sHB".format(receive_size))
+        if payload_len > 0:
+            frame = struct.Struct(">BBIII{}sHB".format(payload_len))
             res = frame.unpack(data)
 
             start_marker, channel_id, sequence, function_id, return_code, payload, crc, end_marker = res
+        elif payload_len < 0:
+            raise ValueError
         else:
             frame = struct.Struct(">BBIIIHB")
             res = frame.unpack(data)
@@ -540,12 +537,95 @@ class Boson(Core):
         if start_marker != 0x8E and end_marker != 0xAE:
             self.logger.warning("Invalid frame markers")
 
-        crc_bytes = binascii.crc_hqx(data[1:-3], 0x1D0F)
+        packet = bytearray()
+
+        header = struct.Struct(">BBIII")
+        header_bytes = bytearray(header.pack(start_marker,
+                                channel_id,
+                                sequence,
+                                function_id,
+                                return_code))
+
+        packet += header_bytes     
+
+        unstuffed_payload = None
+
+        if payload_len > 0:
+            unstuffed_payload = self._unstuff(payload)
+
+        crc_bytes = self._crc(header_bytes, unstuffed_payload)
 
         if crc != crc_bytes:
             self.logger.warning("Invalid checksum")
+
+        return unstuffed_payload
+
+    def _bitstuff(self, data):
+        """
+        Escapes a buffer for transmission over serial
+        """
+        temp = bytearray()
+
+        for byte in data:
+            if byte == 0x8E:
+                temp.append(0x9E)
+                temp.append(0x81)
+            elif byte == 0x9E:
+                temp.append(0x9E)
+                temp.append(0x91)
+            elif byte == 0xAE:
+                temp.append(0x9E)
+                temp.append(0xA1)
+            else:
+                temp.append(byte)
+        return temp
+
+    def _unstuff(self, data):
+        """
+        Un-escapes a buffer for transmission over serial
+        """
+        temp = bytearray()
+        unstuff = False
+
+        for byte in data:
+            if unstuff:
+                temp.append(byte + 0xD)
+                unstuff = False
+            elif byte == 0x9E:
+                unstuff = True
+            else:
+                temp.append(byte)
+
+        return temp
+
+    def receive(self, timeout=1):
+        frame = self.conn.read(17) # Should be at least this big
+        tstart = time.time()
+
+        #retcode = int.from_bytes(frame[4:7], byteorder="big")
+
+        while True:
+            if len(frame) > 0 and frame[-1] == 0xAE:
+                break
+
+            frame += self.conn.read_all()
+
+            if len(frame) >= 1544:
+                break
+
+            if time.time() - tstart > timeout:
+                break
         
-        return payload
+        return frame
+
+    def _crc(self, header, payload=None):
+
+        data = header[1:]
+
+        if payload is not None:
+            data += bytes(payload)
+        
+        return binascii.crc_hqx(data, 0x1D0F)
 
     def _send_packet(self, function_id, data=None, receive_size=0):
         """
@@ -574,22 +654,22 @@ class Boson(Core):
                                 function_id,
                                 0xFFFFFFFF))
 
-        payload = header_bytes
-
-        if data is not None:
-            payload += bytes(data)
-
         # The CRC is computed from the channel number to the last data byte.
-        # This is actually incorrect, since we need to escape certain characters
-        # in the payload (e.g. the start/end markers). But this will work for 
-        # simple commands.
-        crc_bytes = binascii.crc_hqx(payload[1:], 0x1D0F)
+        # It is computed on the "raw" payload, before bitstuffing
+        crc_bytes = self._crc(header_bytes, data)
 
         footer = struct.Struct(">HB")
         footer_bytes = footer.pack(crc_bytes, end_frame)
+
+        # Stuff the data.
+        payload = header_bytes
+
+        if data is not None:
+            payload += self._bitstuff(data)
+        
         payload += footer_bytes
 
         self.send(payload)
-        res = self.receive(17+receive_size)
+        res = self.receive()
 
         return res

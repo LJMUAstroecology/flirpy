@@ -59,7 +59,6 @@ def test_get_part_number():
 
 def test_ffc_request():
     with Boson() as camera:
-
         n_frames = camera.get_frame_count()
         print(n_frames)
         camera.do_ffc()
@@ -89,14 +88,12 @@ def test_ffc_temperature_threshold():
 
 def test_ffc_mode_manual():
     with Boson() as camera:
-
         camera.set_ffc_manual()
         mode = camera.get_ffc_mode()
         assert mode == flirpy.camera.boson.FLR_BOSON_MANUAL_FFC
 
 def test_ffc_mode_auto():
     with Boson() as camera:
-
         camera.set_ffc_auto()
         mode = camera.get_ffc_mode()
         assert mode == flirpy.camera.boson.FLR_BOSON_AUTO_FFC
