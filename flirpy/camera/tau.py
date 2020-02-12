@@ -61,6 +61,8 @@ class Tau:
         self._send_packet(function)
         res = self._read_packet(function)
 
+        return res
+
     def get_serial(self):
         function = ptc.SERIAL_NUMBER
 
@@ -92,7 +94,7 @@ class Tau:
     
     def disable_test_pattern(self):
         function = ptc.SET_TEST_PATTERN
-        argument = struct.pack(">H", 0x00)
+        argument = struct.pack(">h", 0x00)
         self._send_packet(function, argument)
         time.sleep(0.2)
         res = self._read_packet(function)
@@ -184,9 +186,125 @@ class Tau:
         res = self._read_packet(function)
 
         return
+    
+    def digital_output_enabled(self):
+        function = ptc.GET_DIGITAL_OUTPUT_MODE
+
+        self._send_packet(function, "")
+        res = self._read_packet(function)
+
+        if int.from_bytes(res[7], byteorder='big', signed=False) == 0:
+            return True
+        else:
+            return False
+    
+    def enable_digital_output(self):
+        """
+        Enables both LVDS and XP interfaces. Call this, then set the XP mode.
+        """
+        function = ptc.SET_DIGITAL_OUTPUT_MODE
+
+        argument = struct.pack(">h", 0x0000)
+        self._send_packet(function, argument)
+        res = self._read_packet(function)
+
+        if int.from_bytes(res[7], byteorder='big', signed=False) == 0:
+            return True
+        else:
+            return False
+
+    def disable_digital_output(self):
+        function = ptc.SET_DIGITAL_OUTPUT_MODE
+        argument = struct.pack(">h", 0x0002)
+
+        self._send_packet(function, argument)
+        res = self._read_packet(function)
+
+        if int.from_bytes(res[7], byteorder='big', signed=False) == 2:
+            return True
+        else:
+            return False
+        
+    def get_xp_mode(self):
+        function = ptc.GET_DIGITAL_OUTPUT_MODE
+        argument = struct.pack(">h", 0x0200)
+
+        self._send_packet(function, argument)
+        res = self._read_packet(function)
+
+        mode = int.from_bytes(res[7], byteorder='big', signed=False)
+        return mode
+        
+    def set_xp_mode(self, mode=0x02):
+        function = ptc.SET_DIGITAL_OUTPUT_MODE
+        argument = struct.pack(">h", 0x0300 & mode)
+
+        self._send_packet(function, argument)
+        res = self._read_packet(function)
+
+        if int.from_bytes(res[7], byteorder='big', signed=False) == 0x0300 & mode:
+            return True
+        else:
+            return False
+
+    def get_lvds_mode(self):
+        pass
+
+    def set_lvds_mode(self):
+        pass
+
+    def set_cmos_mode(self, fourteen_bit=True):
+
+        function = ptc.SET_DIGITAL_OUTPUT_MODE
+
+        if fourteen_bit == True:
+            mode = 0x00
+        else:
+            mode = 0x01
+
+        argument = struct.pack(">h", 0x0600 & mode)
+
+        self._send_packet(function, argument)
+        res = self._read_packet(function)
+
+        if int.from_bytes(res[7], byteorder='big', signed=False) == 0x0600 & mode:
+            return True
+        else:
+            return False
+
+    def enable_tlinear(self):
+        pass
+    
+    def _sync_teax(self):
+        data = self.conn.read(self.conn.in_waiting)
+        
+        magic = b"TEAX"
+        
+        while data.find(magic) == -1:
+            data = self.conn.read(self.conn.in_waiting)
+            
+        return data[data.find(magic):]
+
+    def _read_frame_teax(self, offset):
+        return self.conn.read(657418-offset)
+
+    def _convert_frame_teax(data):
+        raw_image = np.frombuffer(data[10:], dtype='uint8').reshape((512,2*642))
+        raw_image = 0x3FFF & raw_image.view('uint16')[:,1:-1]
+    
+        return 0.04*raw_image - 273
+    
+    def grab_teax(self):
+        data = b''
+        data = self._sync_teax()
+        data += self._read_frame(len(data))
+            
+        return self._convert_frame_teax(data)
 
     def _send_packet(self, command, argument=[]):
 
+        # Refer to Tau 2 Software IDD
+        # Packet Protocol (Table 3.2)
         packet_size = len(argument)
         assert(packet_size == command.cmd_bytes)  
 
@@ -349,7 +467,6 @@ class Tau:
             argument = struct.pack('>H', block_id)
             self._send_packet(function, argument)
             res = self._read_packet(function, post_delay=0.2)
-
 
     def snapshot(self, frame_id = 0):
         log.info("Capturing frame")
