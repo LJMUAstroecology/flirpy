@@ -1,6 +1,11 @@
+import pytest
 from flirpy.camera.lepton import Lepton
 
+if Lepton.find_video_device() is None:
+    pytest.skip("Lepton not connected, skipping tests", allow_module_level=True)
+
 def test_open_lepton():
+
     camera = Lepton()
     camera.close()
 

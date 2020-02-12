@@ -15,6 +15,7 @@ class Lepton(Core):
         logging.basicConfig(level=loglevel)
         self.logger = logging.getLogger(__name__)
 
+    @classmethod
     def find_video_device(self):
         """
         Attempts to automatically detect which video device corresponds to the PureThermal Lepton by searching for the PID and VID.
