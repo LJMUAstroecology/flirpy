@@ -40,10 +40,10 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description='Split all files in folder')
     parser.add_argument('-o', '--output', help='Output folder', default="./")
-    parser.add_argument('-i', '--input', help='Input file mask', required=True)
+    parser.add_argument('-i', '--input', help='Input file mask, e.g. "/path/*.SEQ" ', required=True)
     parser.add_argument('-v', '--verbosity', help='Logging level', default='info')
     parser.add_argument('--preview_format', help='Output preview format (png, jpg, tiff)', default='jpg')
-    parser.add_argument('--rgb_mask', help='If provided, split videos too', default=None)
+    parser.add_argument('--rgb', help='If provided, split videos too e.g. "/path/*.MOV" ', default=None)
     parser.add_argument('--jpeg_quality', help='RGB Output quality (0-100)', type=int, default=50)
     parser.add_argument('--use_gstreamer', help='Use Gstreamer for video decoding', action='store_true')
     parser.add_argument('--rgb_fps', help='RGB framerate if different from thermal', type=float, default=29.7)
@@ -90,13 +90,19 @@ if __name__ == "__main__":
             recursive_copy(folder, output_folder)
             shutil.rmtree(folder)
     
-    if args.rgb_mask:
+    if args.rgb:
         os.makedirs(os.path.join(output_folder, "rgb"), exist_ok=True)
-        video_files = natsort.natsorted(glob.glob(args.rgb_mask))
+        video_files = natsort.natsorted(glob.glob(args.rgb))
         frame_i = 0
 
         for f in video_files:
             logger.info("Loading: {}".format(f))
+
+        # Count number of frames
+        n_infrared = splitter.frame_count
+        n_rgb = 0
+
+        logger.info("{} infrared frames".format(n_infrared))
 
         for video in tqdm(video_files):
 
@@ -106,20 +112,30 @@ if __name__ == "__main__":
             else:
                 cap = cv2.VideoCapture(video)
 
-            while cap.grab():
-                _, frame = cap.retrieve()
+            n_rgb += cap.get(cv2.CAP_PROP_FRAME_COUNT)
 
-                # Compute matching thermal frame
-                thermal_i = int(round(frame_i*30.0/args.rgb_fps))
-                thermal_j = int(round((frame_i + 1)*30.0/args.rgb_fps))
+        # Calculate offset between thermal and RGB streams
+        get_frame_number = lambda i: round(n_infrared*float(i)/n_rgb)
 
-                out_path = os.path.join(output_folder, "rgb", "rgb_frame_{:06d}.jpg".format(thermal_i))
-                cv2.imwrite(out_path, frame, [cv2.IMWRITE_JPEG_QUALITY, args.jpeg_quality])
+        assert get_frame_number(n_rgb) == n_infrared
 
-                frame_i += 1
-                
-                # Add a duplicate frame if necessary
-                if thermal_j - thermal_i > 1:
-                    logger.debug("Insert duplicate frame at {}".format(thermal_i+1))
-                    out_path = os.path.join(output_folder, "rgb", "rgb_frame_{:06d}.jpg".format(thermal_i+1))
+        logger.info("{} RGB frames".format(n_rgb))
+
+        rgb_frame = 0
+
+        for video in tqdm(video_files):
+            if args.use_gstreamer:
+                pipeline = "gst-launch-1.0 -e -v filesrc location={} ! qtdemux ! decodebin ! appsink".format(video)
+                cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
+            else:
+                cap = cv2.VideoCapture(video)
+
+            for _ in tqdm(range(int(cap.get(cv2.CAP_PROP_FRAME_COUNT)))):
+                res, frame = cap.read()
+
+                if res:
+
+                    out_path = os.path.join(output_folder, "rgb", "rgb_frame_{:06d}.jpg".format(get_frame_number(rgb_frame)))
                     cv2.imwrite(out_path, frame, [cv2.IMWRITE_JPEG_QUALITY, args.jpeg_quality])
+
+                    rgb_frame += 1
