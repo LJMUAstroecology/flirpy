@@ -4,9 +4,8 @@ import pytest
 import os
 import time
 
-with Boson() as camera:
-    if camera.conn is None:
-        pytest.skip("Boson not connected, skipping tests", allow_module_level=True)
+if Boson.find_video_device() is None:
+    pytest.skip("Boson not connected, skipping tests", allow_module_level=True)
 
 def test_open_boson():
    camera = Boson()

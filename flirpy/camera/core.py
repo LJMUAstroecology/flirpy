@@ -12,6 +12,9 @@ class Core:
         self.conn.read_all()
     
     def send(self, packet):
+        # Clear input buffer before write
+        self.conn.read_all()
+
         return self.conn.write(packet)
     
     def receive(self, nbytes):

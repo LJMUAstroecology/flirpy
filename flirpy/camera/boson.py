@@ -100,6 +100,7 @@ class Boson(Core):
                 if self.conn.is_open:
                     self.logger.info("Connected")
 
+    @classmethod
     def find_serial_device(self):
         """
         Attempts to find and return the serial port that the Boson is connected to.
@@ -123,6 +124,7 @@ class Boson(Core):
 
         return port
 
+    @classmethod
     def find_video_device(self):
         """
         Attempts to automatically detect which video device corresponds to the Boson by searching for the PID and VID.
@@ -516,6 +518,20 @@ class Boson(Core):
     def _decode_packet(self, data, receive_size=0):
         """
         Decodes a data packet from the camera.
+
+        Packet Format:
+
+        Start frame byte = 0x8E
+        Channel ID = 0
+        Bytes 0:3 - sequence number
+        Bytes 4:7 - function ID
+        Bytes 8:11 - return code
+        Bytes 12: - payload (optional)
+        CRC bytes - unsigned 16-bit CRC
+        End frame byte = 0xAE
+        
+        Non-zero return codes are logged from the camera as warnings.
+
         """
         payload = None
         payload_len = len(data) - 17
@@ -532,12 +548,24 @@ class Boson(Core):
             res = frame.unpack(data)
 
             start_marker, channel_id, sequence, function_id, return_code, crc, end_marker = res
-            
+        
+        if return_code == 0x0203:
+            self.logger.warning("Boson response: range error")
+        elif return_code == 0x017F:
+            self.logger.warning("Boson response: buffer overflow")
+        elif return_code == 0x017E:
+            self.logger.warning("Boson response: excess bytes")
+        elif return_code == 0x017D:
+            self.logger.warning("Boson response: insufficient bytes")
+        elif return_code == 0x0170:
+            self.logger.warning("Boson response: unspecified error")
+        elif return_code == 0x0162:
+            self.logger.warning("Boson response: bad payload")
+        elif return_code == 0x0161:
+            self.logger.warning("Boson response: bad command ID")
 
         if start_marker != 0x8E and end_marker != 0xAE:
             self.logger.warning("Invalid frame markers")
-
-        packet = bytearray()
 
         header = struct.Struct(">BBIII")
         header_bytes = bytearray(header.pack(start_marker,
@@ -546,7 +574,7 @@ class Boson(Core):
                                 function_id,
                                 return_code))
 
-        packet += header_bytes     
+        packet = header_bytes     
 
         unstuffed_payload = None
 
@@ -602,8 +630,6 @@ class Boson(Core):
         frame = self.conn.read(17) # Should be at least this big
         tstart = time.time()
 
-        #retcode = int.from_bytes(frame[4:7], byteorder="big")
-
         while True:
             if len(frame) > 0 and frame[-1] == 0xAE:
                 break
@@ -619,7 +645,9 @@ class Boson(Core):
         return frame
 
     def _crc(self, header, payload=None):
-
+        """
+        Compute a CRC on a data packet
+        """
         data = header[1:]
 
         if payload is not None:
@@ -631,7 +659,7 @@ class Boson(Core):
         """
         Sends a data packet to the camera.
 
-        Send Package Format:
+        Packet Format:
 
         Start frame byte = 0x8E
         Channel ID = 0
