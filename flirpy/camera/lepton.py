@@ -88,7 +88,7 @@ class Lepton(Core):
             device_id = self.find_video_device()
         
         if device_id is None:
-            raise ValueError("Boson not connected.")
+            raise ValueError("Lepton not connected.")
 
         if sys.platform.startswith('linux'):
             self.cap = cv2.VideoCapture(device_id + cv2.CAP_V4L2)
