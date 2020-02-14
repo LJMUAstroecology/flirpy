@@ -5,6 +5,7 @@ import subprocess
 import cv2
 import struct
 import logging
+import os
 
 class Lepton(Core):
 
@@ -61,7 +62,7 @@ class Lepton(Core):
                     vid = udev.get('ID_VENDOR_ID')
                     pid = udev.get('ID_MODEL_ID')
 
-                    if vid == "1E4E" and pid == "0100":
+                    if vid.lower() == "1e4e" and pid.lower() == "0100":
                         dev.append(i)
                 except KeyError:
                     pass
