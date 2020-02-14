@@ -59,8 +59,8 @@ class Lepton(Core):
                 udev = pyudev.Devices.from_path(context, device)
 
                 try:
-                    vid = udev.get('ID_VENDOR_ID')
-                    pid = udev.get('ID_MODEL_ID')
+                    vid= udev.properties['ID_VENDOR_ID']
+                    pid = udev.properties['ID_MODEL_ID']
 
                     if vid.lower() == "1e4e" and pid.lower() == "0100":
                         dev.append(i)

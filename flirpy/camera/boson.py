@@ -167,7 +167,7 @@ class Boson(Core):
                 udev = pyudev.Devices.from_path(context, device)
 
                 try:
-                    vid = udev.properties['ID_VENDOR_ID']
+                    vid= udev.properties['ID_VENDOR_ID']
                     pid = udev.properties['ID_MODEL_ID']
 
                     if vid.lower() == "09cb" and pid == "4007":
