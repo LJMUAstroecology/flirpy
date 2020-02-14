@@ -17,9 +17,15 @@ def test_find_lepton():
 def test_find_and_capture_lepton():
     camera = Lepton()
     image = camera.grab()
-    
+
     assert image is not None
     assert len(image.shape) == 2
     assert image.dtype == 'uint16'
 
     camera.close()
+
+def test_capture_multiple():
+    with Lepton() as camera:
+        for _ in range(10):
+            image = camera.grab()
+            print(image.mean)
