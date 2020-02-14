@@ -68,13 +68,17 @@ class Lepton(Core):
                     pass
             
             # For some reason multiple devices can show up
-            for d in dev:
-                cam = cv2.VideoCapture(d + cv2.CAP_V4L2)
-                data = cam.read()
-                if data is not None:
-                    res = d
-                    break
-                cam.release()
+            if len(dev) > 1:
+                for d in dev:
+                    cam = cv2.VideoCapture(d + cv2.CAP_V4L2)
+                    data = cam.read()
+                    cam.release()
+
+                    if data is not None:
+                        res = d
+                        break
+            else:
+                res = dev[0]
 
         return res
 
@@ -147,9 +151,6 @@ class Lepton(Core):
             np.array, or None if an error occurred
                 captured image
         """
-
-        if device_id is None:
-            device_id = self.find_video_device()
 
         if self.cap is None:
             self.setup_video(device_id)
