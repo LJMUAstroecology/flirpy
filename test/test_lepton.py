@@ -1,3 +1,4 @@
+import time
 import pytest
 from flirpy.camera.lepton import Lepton
 
@@ -29,3 +30,19 @@ def test_capture_multiple():
         for _ in range(10):
             image = camera.grab()
             print(image.mean)
+
+def test_capture_speed():
+    with Lepton() as camera:
+        _ = camera.grab()
+        tstart = time.time()
+        for _ in range(20):
+            image = camera.grab()
+        tend = time.time()
+        
+        assert tend - tstart < 2.5
+
+def test_capture_setup_first():
+    with Lepton() as camera:
+        camera.setup_video()
+        image = camera.grab()
+        assert image is not None
