@@ -176,13 +176,17 @@ class Boson(Core):
                     pass
             
             # For some reason multiple devices can show up
-            for d in dev:
-                cam = cv2.VideoCapture(d + cv2.CAP_V4L2)
-                data = cam.read()
-                if data is not None:
-                    res = d
-                    break
-                cam.release()
+            if len(dev) > 1:
+                for d in dev:
+                    cam = cv2.VideoCapture(d + cv2.CAP_V4L2)
+                    data = cam.read()
+                    cam.release()
+
+                    if data is not None:
+                        res = d
+                        break
+            else:
+                res = dev[0]
 
         return res
         
