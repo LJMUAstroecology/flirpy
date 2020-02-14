@@ -170,7 +170,7 @@ class Boson(Core):
                     vid = udev.properties['ID_VENDOR_ID']
                     pid = udev.properties['ID_MODEL_ID']
 
-                    if vid == "09cb" and pid == "4007":
+                    if vid.lower() == "09cb" and pid == "4007":
                         dev.append(i)
                 except KeyError:
                     pass
