@@ -182,7 +182,7 @@ class splitter:
                 
                 if i % self.step == 0:
 
-                    frame = Fff(chunk)
+                    frame = Fff(chunk, height=self.height, width=self.width)
                     
                     # Need FFF files to extract meta, but we do it one go afterwards
                     if self.export_meta and self._check_overwrite(filename_fff):
