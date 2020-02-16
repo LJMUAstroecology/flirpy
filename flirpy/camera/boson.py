@@ -185,7 +185,7 @@ class Boson(Core):
                     if data is not None:
                         res = d
                         break
-            else:
+            elif len(dev) == 1:
                 res = dev[0]
 
         return res
