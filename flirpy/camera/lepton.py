@@ -162,5 +162,12 @@ class Lepton(Core):
 
             if strip_telemetry:
                 image = image[:-2,:]
+        else:
+            self.logger.warn("Failed to capture image")
 
         return image
+
+    
+    def release(self):
+        if self.cap:
+            self.cap.release()
