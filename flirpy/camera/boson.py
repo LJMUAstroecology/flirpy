@@ -247,8 +247,17 @@ class Boson(Core):
 
         if self.cap is None:
             self.setup_video(device_id)
+
+        res, image = self.cap.read()
+
+        if not res:
+            self.logger.warn("Failed to capture image")
         
-        return self.cap.read()[1]
+        return image
+
+    def release(self):
+        if self.cap:
+            self.cap.release()
 
     def reboot(self):
         """
