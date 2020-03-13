@@ -35,7 +35,6 @@ def test_get_serial():
     with Boson() as camera:
         assert camera.get_camera_serial() != 0
 
-@pytest.mark.skip
 def test_get_sensor_serial():
     # Skipped until proper CRC is implemented
     with Boson() as camera:
