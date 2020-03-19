@@ -18,7 +18,7 @@ __packagename__ = "flirpy"
 
 setup(
     name=__packagename__,
-    version='0.0.11',
+    version='0.0.14',
     packages=find_packages(),
     author='Josh Veitch-Michaelis',
     author_email='j.veitchmichaelis@gmail.com',

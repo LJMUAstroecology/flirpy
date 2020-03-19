@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "flirpy"
-version = "0.0.11"
+version = "0.0.14"
 description = "Flirpy is a Python library for controlling thermal imaging cameras"
 authors = ["Josh Veitch-Michaelis <j.veitchmichaelis@gmail.com>"]
 license = "MIT"
@@ -11,7 +11,7 @@ documentation = "https://flirpy.readthedocs.io/en/latest/?badge=latest"
 include = ["flirpy/bin/**"]
 
 [tool.poetry.dependencies]
-python = "^3.5"
+python = "~2.7 || ^3.5"
 pyserial = "^3.4"
 tqdm = "^4.42"
 opencv-python-headless = "^4.2"
