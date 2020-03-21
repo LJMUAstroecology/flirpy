@@ -587,8 +587,6 @@ class Boson(Core):
                                 function_id,
                                 return_code))
 
-        packet = header_bytes     
-
         unstuffed_payload = None
 
         if payload_len > 0:
@@ -608,6 +606,10 @@ class Boson(Core):
         temp = bytearray()
 
         for byte in data:
+            
+            if sys.version_info[0] < 3:
+                byte = ord(byte)
+
             if byte == 0x8E:
                 temp.append(0x9E)
                 temp.append(0x81)
@@ -619,6 +621,7 @@ class Boson(Core):
                 temp.append(0xA1)
             else:
                 temp.append(byte)
+
         return temp
 
     def _unstuff(self, data):
@@ -629,6 +632,10 @@ class Boson(Core):
         unstuff = False
 
         for byte in data:
+
+            if sys.version_info[0] < 3:
+                byte = ord(byte)
+
             if unstuff:
                 temp.append(byte + 0xD)
                 unstuff = False
