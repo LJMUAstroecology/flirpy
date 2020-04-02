@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import flirpy.io.seq
+from flirpy.util.exiftool import copy_meta
 import glob
 import argparse
 import os
@@ -140,7 +141,11 @@ if __name__ == "__main__":
 
                 if res:
 
-                    out_path = os.path.join(output_folder, "rgb", "rgb_frame_{:06d}.jpg".format(get_frame_number(rgb_frame)))
+                    out_path = os.path.join(output_folder, "rgb", "frame_{:06d}.jpg".format(get_frame_number(rgb_frame)))
                     cv2.imwrite(out_path, frame, [cv2.IMWRITE_JPEG_QUALITY, args.jpeg_quality])
 
                     rgb_frame += 1
+
+        # Copy over geotags etc
+        copy_filemask = os.path.normpath("./raw/%f.fff")
+        copy_meta(output_folder, filemask=copy_filemask, output_folder=os.path.join(output_folder, "rgb"), ext="jpg")
