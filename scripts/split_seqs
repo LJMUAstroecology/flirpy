@@ -44,7 +44,7 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--verbosity', help='Logging level', default='info')
     parser.add_argument('--preview_format', help='Output preview format (png, jpg, tiff)', default='jpg')
     parser.add_argument('--rgb', help='If provided, split videos too e.g. "/path/*.MOV" ', default=None)
-    parser.add_argument('--jpeg_quality', help='RGB Output quality (0-100)', type=int, default=50)
+    parser.add_argument('--jpeg_quality', help='RGB Output quality (0-100)', type=int, default=80)
     parser.add_argument('--use_gstreamer', help='Use Gstreamer for video decoding', action='store_true')
     parser.add_argument('--width', help='Thermal image width', type=int, default=640)
     parser.add_argument('--height', help='Thermal image height', type=int, default=512)
@@ -110,7 +110,6 @@ if __name__ == "__main__":
         logger.info("{} infrared frames".format(n_infrared))
 
         for video in tqdm(video_files):
-
             if args.use_gstreamer:
                 pipeline = "gst-launch-1.0 -e -v filesrc location={} ! qtdemux ! decodebin ! appsink".format(video)
                 cap = cv2.VideoCapture(pipeline, cv2.CAP_GSTREAMER)
@@ -139,7 +138,6 @@ if __name__ == "__main__":
                 res, frame = cap.read()
 
                 if res:
-
                     out_path = os.path.join(output_folder, "rgb", "rgb_frame_{:06d}.jpg".format(get_frame_number(rgb_frame)))
                     cv2.imwrite(out_path, frame, [cv2.IMWRITE_JPEG_QUALITY, args.jpeg_quality])
 
