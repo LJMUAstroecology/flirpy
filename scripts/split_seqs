@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import flirpy.io.seq
-from flirpy.util.exiftool import copy_meta
+from flirpy.util.exiftool import Exiftool
 import glob
 import argparse
 import os
@@ -56,6 +56,7 @@ if __name__ == "__main__":
     add_bool_arg(parser, name='export_meta', help_string='Export meta information files (also for geotagging)', default=True)
     add_bool_arg(parser, name='export_tiff', help_string='Export radiometric tiff files', default=True)
     add_bool_arg(parser, name='export_preview', help_string='Export 8-bit preview png files', default=True)
+    add_bool_arg(parser, name='skip_thermal', help_string='Skip thermal processing', default=False)
 
     args = parser.parse_args()
 
@@ -87,15 +88,16 @@ if __name__ == "__main__":
     splitter.export_tiff = args.export_tiff
     splitter.export_preview = args.export_preview
 
-    folders = splitter.process(files)
- 
-    if args.merge_folders:
-        logger.info("Merging folders")
-        for folder in tqdm(folders):
-            logger.info("Copying: {}".format(folder))
-            recursive_copy(folder, output_folder)
-            shutil.rmtree(folder)
+    if not args.skip_thermal:
+        folders = splitter.process(files)
     
+        if args.merge_folders:
+            logger.info("Merging folders")
+            for folder in tqdm(folders):
+                logger.info("Copying: {}".format(folder))
+                recursive_copy(folder, output_folder)
+                shutil.rmtree(folder)
+        
     if args.rgb:
         os.makedirs(os.path.join(output_folder, "rgb"), exist_ok=True)
         video_files = natsort.natsorted(glob.glob(args.rgb))
@@ -105,7 +107,7 @@ if __name__ == "__main__":
             logger.info("Loading: {}".format(f))
 
         # Count number of frames
-        n_infrared = splitter.frame_count
+        n_infrared = len(glob.glob(os.path.join(output_folder, "preview/frame_*")))
         n_rgb = 0
 
         logger.info("{} infrared frames".format(n_infrared))
@@ -145,5 +147,7 @@ if __name__ == "__main__":
                     rgb_frame += 1
 
         # Copy over geotags etc
+        logger.info("Copying meta/geotags to RGB frames")
+        exiftool = Exiftool()
         copy_filemask = os.path.normpath("./raw/%f.fff")
-        copy_meta(output_folder, filemask=copy_filemask, output_folder=os.path.join(output_folder, "rgb"), ext="jpg")
+        exiftool.copy_meta(output_folder, filemask=copy_filemask, output_folder=os.path.join(output_folder, "rgb"), ext="jpg")
