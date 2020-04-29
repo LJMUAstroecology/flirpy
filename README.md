@@ -14,7 +14,7 @@ It aims to be a one-stop-shop to:
 
 The library has been tested with:
 
-* FLIR Tau (serial only)
+* FLIR Tau 2 (serial only)
 * FLIR Boson (serial and image capture)
 * FLIR Duo Pro R (image post-processing)
 * TeAx Fusion Zoom (image post-processing)
