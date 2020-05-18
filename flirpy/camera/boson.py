@@ -163,15 +163,15 @@ class Boson(Core):
             path = "/sys/class/video4linux/"
             video_devices = [os.path.join(path, device) for device in os.listdir(path)]
             dev = []
-            for i, device in enumerate(video_devices):
+            for device in video_devices:
                 udev = pyudev.Devices.from_path(context, device)
 
                 try:
                     vid= udev.properties['ID_VENDOR_ID']
                     pid = udev.properties['ID_MODEL_ID']
 
-                    if vid.lower() == "09cb" and pid == "4007":
-                        dev.append(i)
+                    if vid.lower() == "09cb" and pid.lower() == "4007":
+                        dev.append(int(device.split('video')[-1]))
                 except KeyError:
                     pass
             
