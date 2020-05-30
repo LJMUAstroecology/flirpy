@@ -5,7 +5,7 @@
 [![DOI](https://zenodo.org/badge/146534780.svg)](https://zenodo.org/badge/latestdoi/146534780)
 
 
-flirpy is a Python library to interact with FLIR thermal imaging cameras and images.
+flirpy is a Python library to interact with FLIR thermal imaging cameras and images. If you use flirpy for a research or other publishable application, please cite it using the Zenodo DOI.
 
 It aims to be a one-stop-shop to:
 
