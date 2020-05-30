@@ -2,6 +2,9 @@
 
 ![coverage](coverage.svg) [![Documentation Status](https://readthedocs.org/projects/flirpy/badge/?version=latest)](https://flirpy.readthedocs.io/en/latest/?badge=latest)
 
+[![DOI](https://zenodo.org/badge/146534780.svg)](https://zenodo.org/badge/latestdoi/146534780)
+
+
 flirpy is a Python library to interact with FLIR thermal imaging cameras and images.
 
 It aims to be a one-stop-shop to:
