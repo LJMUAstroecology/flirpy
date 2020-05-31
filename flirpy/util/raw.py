@@ -56,6 +56,6 @@ def raw2temp(raw, meta):
 
         raw_object = raw/E/tau1/IRT/tau2-raw_atm1_attn-raw_atm2_attn-raw_window_attn-raw_refl_attn-raw_refl2_attn
 
-        temp = PB/np.log(PR1/(PR2*(raw+PO))+PF)-273.15
+        temp = PB/np.log(PR1/(PR2*(raw_object+PO))+PF)-273.15
 
         return temp
