@@ -165,7 +165,14 @@ image = camera.grab()
 camera.close()
 ```
 
-images are returned as 64-bit Numpy arrays in units of Celsius.
+These radiometric images are returned as 64-bit Numpy arrays in units of Celsius. This assumes a conversion factor of 0.04 K per count.
+
+Conveniently, `TeaxGrabber` subclasses the `Tau` driver so you also have access to all the internal information from the camera, for example:
+
+```
+camera = TeaxGrabber()
+camera.get_fpa_temperature()
+```
 
 ## Driver problems on Windows
 
