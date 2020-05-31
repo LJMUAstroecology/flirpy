@@ -17,7 +17,8 @@ It aims to be a one-stop-shop to:
 
 The library has been tested with:
 
-* FLIR Tau 2 (serial only)
+* FLIR Tau 2 (serial)
+* TeAx ThermalCapture Grabber USB (image capture)
 * FLIR Boson (serial and image capture)
 * FLIR Duo Pro R (image post-processing)
 * TeAx Fusion Zoom (image post-processing)
@@ -153,6 +154,18 @@ camera = Boson()
 image = camera.grab()
 camera.close()
 ```
+
+If you have a Tau with TeAx's USB grabbing back, then you can grab radiometric images directly:
+
+``` python
+from flirpy.camera.tau import TeaxGrabber
+
+camera = TeaxGrabber()
+image = camera.grab()
+camera.close()
+```
+
+images are returned as 64-bit Numpy arrays in units of Celsius.
 
 ## Driver problems on Windows
 

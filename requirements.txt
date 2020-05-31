@@ -5,3 +5,5 @@ numpy
 pytest
 pyudev
 psutil
+pyusb
+pyftdi

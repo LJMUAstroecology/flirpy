@@ -10,6 +10,11 @@ import numpy as np
 import tqdm
 import math
 
+import usb.core
+import usb.util
+from pyftdi.ftdi import Ftdi
+import pyftdi.serialext
+
 # Tau Status codes
 
 CAM_OK = 0x00
@@ -23,7 +28,6 @@ CAM_BYTE_COUNT_ERROR = 0x09
 CAM_FEATURE_NOT_ENABLED= 0x0A
 
 log = logging.getLogger()
-
 class Tau:
 
     def __enter__(self):
@@ -275,32 +279,6 @@ class Tau:
     def enable_tlinear(self):
         pass
     
-    def _sync_teax(self):
-        data = self.conn.read(self.conn.in_waiting)
-        
-        magic = b"TEAX"
-        
-        while data.find(magic) == -1:
-            data = self.conn.read(self.conn.in_waiting)
-            
-        return data[data.find(magic):]
-
-    def _read_frame_teax(self, offset):
-        return self.conn.read(657418-offset)
-
-    def _convert_frame_teax(data):
-        raw_image = np.frombuffer(data[10:], dtype='uint8').reshape((512,2*642))
-        raw_image = 0x3FFF & raw_image.view('uint16')[:,1:-1]
-    
-        return 0.04*raw_image - 273
-    
-    def grab_teax(self):
-        data = b''
-        data = self._sync_teax()
-        data += self._read_frame(len(data))
-            
-        return self._convert_frame_teax(data)
-
     def _send_packet(self, command, argument=[]):
 
         # Refer to Tau 2 Software IDD
@@ -361,7 +339,7 @@ class Tau:
 
     def _read_packet(self, function, post_delay=0.1):
         argument_length = function.reply_bytes
-        data = self.conn.read(10+argument_length)
+        data = self._receive_data(10+argument_length)
 
         log.debug("Received: {}".format(data))
 
@@ -556,5 +534,131 @@ class Tau:
         self.conn.flush()
         return
     
-    def _recieve_data(self, nbytes):
+    def _receive_data(self, nbytes):
         return self.conn.read(nbytes)
+
+class TeaxGrabber(Tau):
+    """
+    Data acquisition class for the Teax ThermalCapture Grabber USB
+    
+    """
+    def __init__(self, vid=0x0403, pid=0x6010):
+        self.dev = usb.core.find(idVendor=vid, idProduct=pid)
+
+        self._ftdi = None
+        
+        if self.dev is not None:
+            self.connect()
+            self._sync_uart()
+            #self._sync()
+            
+    def connect(self):
+        reattach = False
+        if self.dev.is_kernel_driver_active(0):
+            reattach = True
+            self.dev.detach_kernel_driver(0)
+        
+        self._claim_dev()
+        
+        self._ftdi = Ftdi()
+        self._ftdi.open_from_device(self.dev)
+        
+        self._ftdi.set_bitmode(0xFF, Ftdi.BitMode.RESET)
+        self._ftdi.set_bitmode(0xFF, Ftdi.BitMode.SYNCFF)
+                  
+    def _claim_dev(self):
+        self.dev.reset()
+        self._release()
+        
+        self.dev.set_configuration(1)
+
+        usb.util.claim_interface(self.dev, 0)
+        usb.util.claim_interface(self.dev, 1)
+        
+    def _release(self):
+        for cfg in self.dev:
+            for intf in cfg:
+                if self.dev.is_kernel_driver_active(intf.bInterfaceNumber):
+                    try:
+                        self.dev.detach_kernel_driver(intf.bInterfaceNumber)
+                    except usb.core.USBError as e:
+                        print("Could not detatch kernel driver from interface({0}): {1}".format(intf.bInterfaceNumber, str(e)))
+    
+    def _read(self, n_bytes=0, packets_per_transfer=8, num_transfers=256):
+        FTDI_PACKET_SIZE = 512
+        
+        if n_bytes == 0:
+            n_bytes = packets_per_transfer * FTDI_PACKET_SIZE
+  
+        return self._ftdi.read_data(n_bytes)
+                
+    def _sync(self):
+        data = self._read()
+        
+        magic = b"TEAX"
+        
+        while data.find(magic) == -1:
+            data = self._read()
+            
+        return data[data.find(magic):]
+    
+    def _sync_uart(self, allow_timeout=False):
+        data = self._read()
+        
+        magic = b"UART"
+        
+        t = time.time()
+        while data.find(magic) == -1:
+            data = self._read()
+            
+            if allow_timeout and time.time()-t > 0.2:
+                break
+            
+        return data[data.find(magic):]
+
+    def _convert_frame(self, data):
+        raw_image = np.frombuffer(data[10:], dtype='uint8').reshape((512,2*642))
+        raw_image = 0x3FFF & raw_image.view('uint16')[:,1:-1]
+    
+        return 0.04*raw_image - 273
+    
+    def _send_data(self, data):
+        # header
+        buffer = b"UART"
+        buffer += int(len(data)).to_bytes(1, byteorder='big') # doesn't matter
+        buffer += data
+        #self._sync_uart(allow_timeout=True)
+        self._ftdi.write_data(buffer)
+        
+    def _receive_data(self, length):
+        
+        length += length*5
+        
+        data = self._sync_uart()
+        
+        if len(data) < length:
+            data += self._read(n_bytes=length-len(data))
+            
+            
+        return data[:length][5::6]
+        
+    def grab(self, radiometric=True):
+        
+        data = b''
+        data = self._sync()
+        
+        while len(data) < 657418:
+            data += self._read(657418-len(data))
+        
+        if radiometric:
+            data = self._convert_frame(data)
+            
+        return data
+    
+    def close(self):
+        if self._ftdi is not None:
+            self._ftdi.close()
+
+    def __exit__(self, type, value, traceback):
+        self.close()
+        log.info("Disconnecting from camera.")

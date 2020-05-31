@@ -5,7 +5,7 @@ import time
 
 with Tau() as camera:
     if camera.conn is None:
-        pytest.skip("Boson not connected, skipping tests", allow_module_level=True)
+        pytest.skip("Tau not connected, skipping tests", allow_module_level=True)
 
 def test_open_tau():
    camera = Tau()
