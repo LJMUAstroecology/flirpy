@@ -170,9 +170,29 @@ These radiometric images are returned as 64-bit Numpy arrays in units of Celsius
 
 Conveniently, `TeaxGrabber` subclasses the `Tau` driver so you also have access to all the internal information from the camera, for example:
 
-```
+```python
 camera = TeaxGrabber()
 camera.get_fpa_temperature()
+```
+
+Cameras support the Python `with` interface to ensure that interfaces are properly closed when the resource is no longer needed (swap in Lepton or TeaxGraber):
+
+```python
+import cv2
+from flirpy.camera.boson import Boson
+
+with Boson() as camera:
+    while True:
+        img = camera.grab().astype(np.float32)
+
+        # Rescale to 8 bit
+        img = 255*(img - img.min())/(img.max()-img.min())
+
+        cv2.imshow('Boson', img.astype(np.uint8))
+        if cv2.waitKey(1) == 27:
+            break  # esc to quit
+        
+cv2.destroyAllWindows()
 ```
 
 ## Driver problems on Windows
