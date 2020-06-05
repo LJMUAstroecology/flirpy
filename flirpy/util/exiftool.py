@@ -61,15 +61,12 @@ class Exiftool:
 
         # Do some mangling here to avoid busting the command line limit.
         # First, we run the command in the right working directory
-        cwd, _ = os.path.split(filemask)
-
-        # Then we expand the wildcard and pass to the shell 
-        # (but don't need to pass the full path since we use cwd)
-        files = glob.glob(filemask)
-        files = [os.path.split(f)[1] for f in files]
+        cwd = os.path.dirname(filemask)
 
         cmd = [self.path]
-        cmd += files
+        cmd.append("-ext")
+        cmd.append("fff")
+        cmd.append(".")
         cmd.append("-w!")
         cmd.append(".txt")
 
