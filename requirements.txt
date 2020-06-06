@@ -7,3 +7,4 @@ pyudev
 psutil
 pyusb
 pyftdi
+natsort
