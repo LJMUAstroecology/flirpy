@@ -37,6 +37,24 @@ def recursive_copy(src, dst):
     
     return
 
+def recursive_move(src, dst):
+    # https://stackoverflow.com/a/7420617/395457
+
+    for src_dir, dirs, files in os.walk(src):
+        dst_dir = src_dir.replace(src, dst, 1)
+        
+        os.makedirs(dst_dir, exist_ok=True)
+
+        for file_ in files:
+            src_file = os.path.join(src_dir, file_)
+            dst_file = os.path.join(dst_dir, file_)
+            if os.path.exists(dst_file):
+                # in case of the src and dst are the same file
+                if os.path.samefile(src_file, dst_file):
+                    continue
+                os.remove(dst_file)
+            shutil.move(src_file, dst_dir)
+
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(description='Split all files in folder')
@@ -44,7 +62,7 @@ if __name__ == "__main__":
     parser.add_argument('-i', '--input', help='Input file mask, e.g. "/path/*.SEQ" ', default="*.SEQ")
     parser.add_argument('-v', '--verbosity', help='Logging level', default='info')
     parser.add_argument('--preview_format', help='Output preview format (png, jpg, tiff)', default='jpg')
-    parser.add_argument('--rgb', help='If provided, split videos too e.g. "/path/*.MOV" ', default="*.MOV")
+    parser.add_argument('--rgb', help='If provided, split videos too e.g. "/path/*.MOV" ', default="")
     parser.add_argument('--jpeg_quality', help='RGB Output quality (0-100)', type=int, default=80)
     parser.add_argument('--use_gstreamer', help='Use Gstreamer for video decoding', action='store_true')
     parser.add_argument('--width', help='Thermal image width', type=int, default=640)
@@ -56,7 +74,7 @@ if __name__ == "__main__":
     add_bool_arg(parser, name='export_tiff', help_string='Export radiometric tiff files', default=True)
     add_bool_arg(parser, name='export_preview', help_string='Export 8-bit preview png files', default=True)
     add_bool_arg(parser, name='skip_thermal', help_string='Skip thermal processing', default=False)
-    add_bool_arg(parser, name='sync_rgb', help_string='Attempt to synchronise RGB/IR streams', default=True)
+    add_bool_arg(parser, name='sync_rgb', help_string='Attempt to synchronise RGB/IR streams', default=False)
 
     args = parser.parse_args()
 
@@ -98,7 +116,7 @@ if __name__ == "__main__":
                 recursive_copy(folder, output_folder)
                 shutil.rmtree(folder)
         
-    if args.rgb:
+    if args.rgb != "":
         os.makedirs(os.path.join(output_folder, "rgb"), exist_ok=True)
         video_files = natsort.natsorted(glob.glob(args.rgb))
         frame_i = 0
