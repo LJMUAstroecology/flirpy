@@ -22,6 +22,8 @@ This will create a folder called split subfolders for each data type.
 * Raw images are FLIR FFF files, also stored here is the metadata for each frame in a text file
 * RGB images are stored as JPEGs and are time-synchronised to match the IR frames.
 
+The program will first split each SEQ file into a temporary folder, before merging these folders into one containing the entire "video". Merging is optional, but you will probably find it convenient to have all the images, in sequence, in one place. You can disable splitting certain file types by using the appropriate flag (e.g. `--no_export_tiff`).
+
 Note that JPEG/TIFFs are preferred because they can be geotagged. Flirpy will automatically copy geolocation information from the base SEQ file to the preview, radiometric and RGB images ready for use with photogrammetry software like Pix4D.
 
 Full documentation can be seen by calling `split_seqs -h`:
@@ -74,4 +76,12 @@ Full documentation can be seen by calling `split_seqs -h`:
      --no_export_preview   Export 8-bit preview png files
      --skip_thermal        Skip thermal processing
      --no_skip_thermal     Skip thermal processing
+
+If you just want to split the data without worrying about where it goes, make a single folder with all the files from the flight (e.g. .SEQ, .MOV), `cd` to that folder and just run `split_seqs` which will create a folder called `split` with the processed files.
+
+Thermal and RGB Synchronisation
+########
+
+One of the most frustrating "features" of the Duo Pro R is that the infrared and RGB cameras are not synchronised in video mode. This is an odd design choice by FLIR, since both cameras can presumably be hardware co-triggered. As a result, the IR sequence has an approximate frame rate of 30fps, while the RGB stream has a frame rate of 29.97fps which is standard. This means that you can't simply match up frame numbers. If you are doing a survey flight, you are **strongly** recommended to use multiple capture mode (1 photo a second) which will at least give you synced pairs of images a the cost of frame rate.
+
 
