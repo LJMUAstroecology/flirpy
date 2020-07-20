@@ -176,13 +176,15 @@ class Boson(Core):
                     pass
             
             # For some reason multiple devices can show up
+            # The lower index is often correct, so do a sort first
             if len(dev) > 1:
-                for d in dev:
+                for d in sorted(dev):
                     cam = cv2.VideoCapture(d + cv2.CAP_V4L2)
                     data = cam.read()
                     cam.release()
 
-                    if data is not None:
+                    # data[1] is the image and should be a numpy array
+                    if data[0] == True and data[1] is not None:
                         res = d
                         break
             elif len(dev) == 1:
