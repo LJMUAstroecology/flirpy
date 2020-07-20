@@ -279,7 +279,9 @@ class Tau:
     def enable_tlinear(self):
         pass
     
-    def _send_packet(self, command, argument=[]):
+    def _send_packet(self, command, argument=None):
+        if argument is None:
+            argument = []
 
         # Refer to Tau 2 Software IDD
         # Packet Protocol (Table 3.2)
