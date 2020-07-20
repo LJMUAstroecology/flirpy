@@ -544,20 +544,22 @@ class TeaxGrabber(Tau):
     Data acquisition class for the Teax ThermalCapture Grabber USB
     
     """
-    def __init__(self, vid=0x0403, pid=0x6010):
+    def __init__(self, vid=0x0403, pid=0x6010, width=512, height=640):
         self.dev = usb.core.find(idVendor=vid, idProduct=pid)
 
         self._ftdi = None
+        self.frame_size = 2*height*width+2058 # probably wrong for 320x256
         
         if self.dev is not None:
             self.connect()
+            # Check for UART and TEAX magic strings, but 
+            # it's OK if we timeout here
             self._sync_uart()
-            #self._sync()
+            # For some reason if we frame sync here, everything dies
+            #self._sync(allow_timeout=True)
             
     def connect(self):
-        reattach = False
         if self.dev.is_kernel_driver_active(0):
-            reattach = True
             self.dev.detach_kernel_driver(0)
         
         self._claim_dev()
@@ -594,13 +596,20 @@ class TeaxGrabber(Tau):
   
         return self._ftdi.read_data(n_bytes)
                 
-    def _sync(self):
+    def _sync(self, allow_timeout=False):
         data = self._read()
         
         magic = b"TEAX"
         
+        t = time.time()
         while data.find(magic) == -1:
             data = self._read()
+            
+            if not allow_timeout and time.time()-t > 0.2:
+                log.warn("Timeout in frame sync")
+                break
+            elif time.time() -t > 0.2:
+                break
             
         return data[data.find(magic):]
     
@@ -613,23 +622,28 @@ class TeaxGrabber(Tau):
         while data.find(magic) == -1:
             data = self._read()
             
-            if allow_timeout and time.time()-t > 0.2:
+            if not allow_timeout and time.time()-t > 0.2:
+                log.warn("Timeout in command sync")
                 break
-            
+            elif time.time() -t > 0.2:
+                break
+        
         return data[data.find(magic):]
 
-    def _convert_frame(self, data):
+    def _convert_frame(self, data, to_temperature=True):
         raw_image = np.frombuffer(data[10:], dtype='uint8').reshape((512,2*642))
         raw_image = 0x3FFF & raw_image.view('uint16')[:,1:-1]
-    
-        return 0.04*raw_image - 273
+
+        if to_temperature:
+            return 0.04*raw_image - 273
+        else:
+            return raw_image
     
     def _send_data(self, data):
         # header
         buffer = b"UART"
         buffer += int(len(data)).to_bytes(1, byteorder='big') # doesn't matter
         buffer += data
-        #self._sync_uart(allow_timeout=True)
         self._ftdi.write_data(buffer)
         
     def _receive_data(self, length):
@@ -644,16 +658,46 @@ class TeaxGrabber(Tau):
             
         return data[:length][5::6]
         
-    def grab(self, radiometric=True):
-        
-        data = b''
-        data = self._sync()
-        
-        while len(data) < 657418:
-            data += self._read(657418-len(data))
-        
-        if radiometric:
-            data = self._convert_frame(data)
+    def grab(self, to_temperature=True, retries=5):
+
+        # Note that in TeAx's official driver, they use a threaded loop
+        # to read data as it streams from the camera and they simply
+        # process images/commands as they come back. There isn't the same 
+        # sort of query/response structure that you'd normally see with
+        # a serial device as the camera basically vomits data as soon as
+        # the port opens.
+        # 
+        # The current approach here aims to allow a more structured way of
+        # interacting with the camera by synchronising with the stream whenever
+        # some particular data is requested. However in the future it may be better
+        # if this is moved to a threaded function that continually services the
+        # serial stream and we have some kind of helper function which responds 
+        # to commands and waits to see the answer from the camera.
+         
+        for i in range(retries):
+
+            data = b''
+            data = self._sync()
+
+            t = time.time()
+            while len(data) < self.frame_size:
+                data += self._read(n_bytes=self.frame_size-len(data))
+
+                if time.time()-t > 0.2:
+                    data = None
+                    log.warn("Timeout in image capture")
+                    break
+            
+            if len(data) == self.frame_size:
+                break
+            else:
+                log.warn("Data size incorrect")
+                data = None
+
+        log.debug("Retries: {}".format(i))
+
+        if data is not None:
+            data = self._convert_frame(data, to_temperature=to_temperature)
             
         return data
     
