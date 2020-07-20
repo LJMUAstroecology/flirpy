@@ -3,7 +3,9 @@ import math
 
 def raw2temp(raw, meta):
     """
-    Convert raw pixel values to temperature, if calibration coefficients are known.
+    Convert raw pixel values to temperature, if calibration coefficients are known. The
+    equations for atmospheric and window transmission are found in Minkina and Dudzik, as 
+    well as some of FLIR's documentation.
 
     Roughly ported from ThermImage: https://github.com/gtatters/Thermimage/blob/master/R/raw2temp.R
 
@@ -27,7 +29,7 @@ def raw2temp(raw, meta):
     RTemp = float(meta["Reflected Apparent Temperature"].split('C')[0])
     humidity = float(meta["Relative Humidity"].split('%')[0])
 
-    # Equations to conert to temperature
+    # Equations to convert to temperature
     # See http://130.15.24.88/exiftool/forum/index.php/topic,4898.60.html
     # Standard equation: temperature<-PB/log(PR1/(PR2*(raw+PO))+PF)-273.15
     # Other source of information: Minkina and Dudzik's Infrared Thermography: Errors and Uncertainties
