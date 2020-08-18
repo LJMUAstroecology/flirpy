@@ -144,7 +144,7 @@ class Boson(Core):
         if sys.platform.startswith('win32'):
             device_check_path = pkg_resources.resource_filename('flirpy', 'bin/find_cameras.exe')
             device_id = int(subprocess.check_output([device_check_path, "FLIR Video"]).decode())
-
+            print("Device ID:", device_id)
             if device_id >= 0:
                 return device_id
 
@@ -234,7 +234,6 @@ class Boson(Core):
         # boson is ignored. There are other options, see Boson datasheet.
         self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y16 "))
         self.cap.set(cv2.CAP_PROP_CONVERT_RGB, 0)
-        
 
     def grab(self, device_id=None):
         """
@@ -370,11 +369,12 @@ class Boson(Core):
         """
         Get the current FFC mode
 
-        0 = FLR_BOSON_NO_FFC_PERFORMED
-        1 = FLR_BOSON_FFC_IMMINENT
-        2 = FLR_BOSON_FFC_IN_PROGRESS
-        3 = FLR_BOSON_FFC_COMPLETE
-        4 = FLR_BOSON_FFCSTATUS_END
+        FLR_BOSON_MANUAL_FFC = 0
+        FLR_BOSON_AUTO_FFC = 1
+        FLR_BOSON_EXTERNAL_FFC = 2
+        FLR_BOSON_SHUTTER_TEST_FFC = 3
+        FLR_BOSON_FFCMODE_END = 4
+
 
         Returns
         -------
@@ -383,6 +383,25 @@ class Boson(Core):
                 FFC mode
         """
         function_id = 0x00050013
+        res = self._send_packet(function_id, receive_size=4)
+        res = self._decode_packet(res, receive_size=4)
+
+        return struct.unpack(">I", res)[0]
+
+    def get_gao_ffc_mode(self):
+        """
+        Get whether the ffc correction is applied in the Boson image processing pipeline.
+        0 = disabled
+        1 = enabled
+
+
+        Returns
+        -------
+
+            int
+                FLR_ENABLE_E
+        """
+        function_id = 0x00000004
         res = self._send_packet(function_id, receive_size=4)
         res = self._decode_packet(res, receive_size=4)
 
