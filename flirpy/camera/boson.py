@@ -144,7 +144,7 @@ class Boson(Core):
         if sys.platform.startswith('win32'):
             device_check_path = pkg_resources.resource_filename('flirpy', 'bin/find_cameras.exe')
             device_id = int(subprocess.check_output([device_check_path, "FLIR Video"]).decode())
-            print("Device ID:", device_id)
+            self.logger.info("Device ID:", device_id)
             if device_id >= 0:
                 return device_id
 
@@ -632,7 +632,7 @@ class Boson(Core):
         function_id = 0x0005001B
         self._send_packet(function_id)  # Read factory boot settings and set them as current settings
         self.set_pwr_on_defaults()  # Set the factory boot settings as power on settings.
-        print("consider cycling power and reconnecting to camera to insure all factory settings take effect.")
+        self.logger.warn("consider cycling power and reconnecting to camera to insure all factory settings take effect.")
 
         return
 
@@ -648,7 +648,7 @@ class Boson(Core):
         self._send_packet(function_id, data=command)
         # But this change does not happen immediately. Instead it must be saved as a power on default.
         self.set_pwr_on_defaults() # Set the current states as power on defaults
-        print("The camera must be disconnected and reconnected for the change in averager state to take effect.")
+        self.logger.warn("The camera must be disconnected and reconnected for the change in averager state to take effect.")
 
         return
 
