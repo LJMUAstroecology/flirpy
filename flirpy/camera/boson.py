@@ -99,6 +99,10 @@ class Boson(Core):
 
                 if self.conn.is_open:
                     self.logger.info("Connected")
+        else:
+            self.connect(port, baudrate)
+            if self.conn.is_open:
+                self.logger.info("Connected")
 
     @classmethod
     def find_serial_device(self):
@@ -140,7 +144,7 @@ class Boson(Core):
         if sys.platform.startswith('win32'):
             device_check_path = pkg_resources.resource_filename('flirpy', 'bin/find_cameras.exe')
             device_id = int(subprocess.check_output([device_check_path, "FLIR Video"]).decode())
-
+            self.logger.info("Device ID: {}".format(device_id))
             if device_id >= 0:
                 return device_id
 
@@ -225,9 +229,11 @@ class Boson(Core):
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT,256)
         
         # The order of these calls matters!
+        # The Y16 command tells the Boson to send pre-AGC 16 bit pixels. This means the pixel intensity is linearly
+        # proportional to the flux incident on the pixel. This also means all internal image processing done by the
+        # boson is ignored. There are other options, see Boson datasheet.
         self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y16 "))
         self.cap.set(cv2.CAP_PROP_CONVERT_RGB, 0)
-        
 
     def grab(self, device_id=None):
         """
@@ -258,6 +264,10 @@ class Boson(Core):
         return image
 
     def release(self):
+        """
+        This will release the camera hardware.
+        :return:
+        """
         if self.cap:
             self.cap.release()
 
@@ -269,7 +279,6 @@ class Boson(Core):
         self._send_packet(function_id)
 
         return 
-
 
     def get_sensor_serial(self):
         """
@@ -372,11 +381,12 @@ class Boson(Core):
         """
         Get the current FFC mode
 
-        0 = FLR_BOSON_NO_FFC_PERFORMED
-        1 = FLR_BOSON_FFC_IMMINENT
-        2 = FLR_BOSON_FFC_IN_PROGRESS
-        3 = FLR_BOSON_FFC_COMPLETE
-        4 = FLR_BOSON_FFCSTATUS_END
+        FLR_BOSON_MANUAL_FFC = 0
+        FLR_BOSON_AUTO_FFC = 1
+        FLR_BOSON_EXTERNAL_FFC = 2
+        FLR_BOSON_SHUTTER_TEST_FFC = 3
+        FLR_BOSON_FFCMODE_END = 4
+
 
         Returns
         -------
@@ -392,6 +402,55 @@ class Boson(Core):
             res = struct.unpack(">I", res)[0]
 
         return res
+
+    def get_gao_ffc_mode(self):
+        """
+        Get whether the ffc correction is applied in the Boson image processing pipeline.
+        0 = disabled
+        1 = enabled
+
+
+        Returns
+        -------
+
+            int
+                FLR_ENABLE_E
+        """
+        function_id = 0x00000004
+        res = self._send_packet(function_id, receive_size=4)
+        res = self._decode_packet(res, receive_size=4)
+
+        return struct.unpack(">I", res)[0]
+
+    def get_ffc_desired(self):
+        """
+        Get the state of the FFC desired flag. 0 = not desired. 1 = desired.
+        :return: int 0 or 1
+        """
+        function_id = 0x00050055
+        res = self._send_packet(function_id, receive_size=4)
+        res = self._decode_packet(res, receive_size=4)
+
+        return struct.unpack(">I", res)[0]
+
+    def get_nuc_desired(self):
+        """
+        Get the state of the NUC table switch desired flag. 0 = not desired. 1 = desired.
+        :return: int 0 or 1
+        """
+        function_id = 0x0005005F
+        res = self._send_packet(function_id, receive_size=2)
+        res = self._decode_packet(res, receive_size=2)
+
+        return struct.unpack(">H", res)[0]
+
+    def do_nuc_table_switch(self):
+        """
+        This will perform a table NUC table switch, if the nuc table switch desired flag is set.
+        :return:
+        """
+        function_id = 0x00050050
+        self._send_packet(function_id)
 
     def set_ffc_auto(self):
         """
@@ -493,7 +552,6 @@ class Boson(Core):
 
         return res
 
-
     def get_last_ffc_frame_count(self):
         """
         Get the frame count when the last FFC occured
@@ -508,7 +566,35 @@ class Boson(Core):
             res = struct.unpack(">I", res)[0]
 
         return res
-    
+
+    def set_num_ffc_frame(self, num_frame):
+        """
+        Set the number of frames for the camera to integrate during FFC. 8 is factory default. With averager on, the
+        time to perform ffc is doubled.
+        :param num_frame: int 2, 4, 8, 16.
+        :return:
+        """
+        function_id = 0x0000000D
+        command = struct.pack(">H", num_frame)
+        res = self._send_packet(function_id, data=command)
+        res = self._decode_packet(res)
+
+        return
+
+    def get_num_ffc_frame(self):
+        """
+        Get the number of frames the camera integrates during FFC.
+        :return: int: 2,4,6, or 8
+        """
+        function_id = 0x0000000E
+        res = self._send_packet(function_id, receive_size=2)
+        res = self._decode_packet(res)
+        
+        if res is not None and len(res) == 2:
+            res = struct.unpack(">H",res)[0]
+            
+        return res
+
     def get_frame_count(self):
         """
         Get the number of frames captured since the camera was turned on.
@@ -549,7 +635,7 @@ class Boson(Core):
 
     def get_camera_serial(self):
         """
-        Get the camera serial number 
+        Get the camera serial number
 
         Returns
         -------
@@ -565,7 +651,60 @@ class Boson(Core):
             res = struct.unpack(">I", res)[0]
 
         return res
-    
+
+    def set_pwr_on_defaults(self):
+        """
+        Apply the current settings as power on defaults.
+        :return:
+        """
+        function_id = 0x00050018
+        self._send_packet(function_id)
+
+        return
+
+    def set_pwr_on_defaults_factory(self):
+        """
+        This will restore power on defaults to factory settings. The camera should be disconnected and reconnected to
+        make sure all changes take effect. A reboot does not appear to be enough.
+        :return:
+        """
+        function_id = 0x0005001B
+        self._send_packet(function_id)  # Read factory boot settings and set them as current settings
+        self.set_pwr_on_defaults()  # Set the factory boot settings as power on settings.
+        self.logger.warn("consider cycling power and reconnecting to camera to insure all factory settings take effect.")
+
+        return
+
+    def set_averager(self, value):
+        """
+        This will set the smart averager state to the value
+        :param value: int 0=off (factory default), 1=on
+        :return:
+        """
+        function_id = 0x0000000B
+        command = struct.pack(">I", value)
+        # Tell the camera to set the smart averager state
+        self._send_packet(function_id, data=command)
+        # But this change does not happen immediately. Instead it must be saved as a power on default.
+        self.set_pwr_on_defaults() # Set the current states as power on defaults
+        self.logger.warn("The camera must be disconnected and reconnected for the change in averager state to take effect.")
+
+        return
+
+    def get_averager(self):
+        """
+        Get the current state of the smart averager.
+        :return: int. 0=off 1=on.
+        """
+        function_id = 0x0000000C
+        res = self._send_packet(function_id, receive_size=4)
+        res = self._decode_packet(res, receive_size=4)
+        
+        if res is not None and len(res) == 4:
+            res = struct.unpack(">I", res)[0]
+
+        return res
+
     def _decode_packet(self, data, receive_size=0):
         """
         Decodes a data packet from the camera.
