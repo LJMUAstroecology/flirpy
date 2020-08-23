@@ -226,7 +226,7 @@ class Boson(Core):
         
         # The order of these calls matters!
         self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y16 "))
-        self.cap.set(cv2.CAP_PROP_CONVERT_RGB, False)
+        self.cap.set(cv2.CAP_PROP_CONVERT_RGB, 0)
         
 
     def grab(self, device_id=None):
@@ -285,7 +285,10 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=4)
         res = self._decode_packet(res, receive_size=4)
 
-        return struct.unpack(">I", res)[0]
+        if res is not None and len(res) == 4:
+            res = struct.unpack(">I", res)[0]
+
+        return res
     
     def get_firmware_revision(self):
         """
@@ -302,7 +305,10 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=12)
         res = self._decode_packet(res, receive_size=12)
 
-        return struct.Struct(">iii").unpack_from(res)
+        if res is not None and len(res) == 12:
+             res = struct.Struct(">iii").unpack_from(res)
+
+        return res
     
     def get_part_number(self):
         """
@@ -317,7 +323,10 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=20)
         res = self._decode_packet(res, receive_size=20)
 
-        return res.decode("utf-8") 
+        if res is not None and len(res) == 20:
+            res = res.decode("utf-8")
+
+        return res
 
     def do_ffc(self):
         """
@@ -354,7 +363,10 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=2)
         res = self._decode_packet(res, receive_size=2)
 
-        return struct.unpack(">H", res)[0]
+        if res is not None and len(res) == 2:
+            res = struct.unpack(">H", res)[0]
+
+        return res
 
     def get_ffc_mode(self):
         """
@@ -376,7 +388,10 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=4)
         res = self._decode_packet(res, receive_size=4)
 
-        return struct.unpack(">I", res)[0]
+        if res is not None and len(res) == 4:
+            res = struct.unpack(">I", res)[0]
+
+        return res
 
     def set_ffc_auto(self):
         """
@@ -430,7 +445,10 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=2)
         res = self._decode_packet(res, receive_size=2)
 
-        return struct.unpack(">H", res)[0]/10.0
+        if res is not None and len(res) == 2:
+            res = struct.unpack(">H", res)[0]/10.0
+
+        return res
     
     def set_ffc_frame_threshold(self, seconds):
         """
@@ -456,7 +474,10 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=4)
         res = self._decode_packet(res, receive_size=4)
 
-        return struct.unpack(">I", res)[0]
+        if res is not None and len(res) == 4:
+            res = struct.unpack(">I", res)[0]
+
+        return res
     
     def get_last_ffc_temperature(self):
         """
@@ -467,7 +488,10 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=2)
         res = self._decode_packet(res, receive_size=2)
 
-        return struct.unpack(">H", res)[0]/10.0
+        if res is not None and len(res) ==2:
+            res = struct.unpack(">H", res)[0]/10.0
+
+        return res
 
 
     def get_last_ffc_frame_count(self):
@@ -480,7 +504,10 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=4)
         res = self._decode_packet(res, receive_size=4)
 
-        return struct.unpack(">I", res)[0]
+        if res is not None and len(res) == 4:
+            res = struct.unpack(">I", res)[0]
+
+        return res
     
     def get_frame_count(self):
         """
@@ -496,7 +523,10 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=4)
         res = self._decode_packet(res, receive_size=4)
 
-        return struct.unpack(">I", res)[0]
+        if res is not None and len(res) == 4:
+            res = struct.unpack(">I", res)[0]
+
+        return res
 
     def get_fpa_temperature(self):
         """
@@ -512,7 +542,10 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=2)
         res = self._decode_packet(res, receive_size=2)
 
-        return struct.unpack(">H", res)[0]/10.0
+        if res is not None and len(res) == 2:
+            res = struct.unpack(">H", res)[0]/10.0
+
+        return res
 
     def get_camera_serial(self):
         """
@@ -528,7 +561,10 @@ class Boson(Core):
         res = self._send_packet(function_id, receive_size=4)
         res = self._decode_packet(res, receive_size=4)
 
-        return struct.unpack(">I", res)[0]
+        if res is not None and len(res) == 4:
+            res = struct.unpack(">I", res)[0]
+
+        return res
     
     def _decode_packet(self, data, receive_size=0):
         """
@@ -552,17 +588,27 @@ class Boson(Core):
         payload_len = len(data) - 17
 
         if payload_len > 0:
-            frame = struct.Struct(">BBIII{}sHB".format(payload_len))
-            res = frame.unpack(data)
-
-            start_marker, channel_id, sequence, function_id, return_code, payload, crc, end_marker = res
+            try:
+                frame = struct.Struct(">BBIII{}sHB".format(payload_len))
+                res = frame.unpack(data)
+                start_marker, channel_id, sequence, function_id, return_code, payload, crc, end_marker = res
+            except Exception as e:
+                self.logger.error(str(e))
+                self.logger.error("Failed to unpack payload")
+                return None
         elif payload_len < 0:
-            raise ValueError
+            self.logger.error("Failed to open payload")
+            return None
         else:
-            frame = struct.Struct(">BBIIIHB")
-            res = frame.unpack(data)
+            try:
+                frame = struct.Struct(">BBIIIHB")
+                res = frame.unpack(data)
 
-            start_marker, channel_id, sequence, function_id, return_code, crc, end_marker = res
+                start_marker, channel_id, sequence, function_id, return_code, crc, end_marker = res
+            except Exception as e:
+                self.logger.error(str(e))
+                self.logger.error("Failed to unpack payload")
+                return None
         
         if return_code == 0x0203:
             self.logger.warning("Boson response: range error")
@@ -597,7 +643,7 @@ class Boson(Core):
         crc_bytes = self._crc(header_bytes, unstuffed_payload)
 
         if crc != crc_bytes:
-            self.logger.warning("Invalid checksum")
+            self.logger.warning("Invalid checksum, but data may be OK")
 
         return unstuffed_payload
 
@@ -723,3 +769,5 @@ class Boson(Core):
         res = self.receive()
 
         return res
+
+
