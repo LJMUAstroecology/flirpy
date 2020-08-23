@@ -74,7 +74,7 @@ class Lepton(Core):
                     data = cam.read()
                     cam.release()
 
-                    if data is not None:
+                    if data[0] == True and data[1] is not None:
                         res = d
                         break
             elif len(dev) == 1:
