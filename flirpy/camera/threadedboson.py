@@ -7,15 +7,15 @@ import logging
 from . threadedcamera import ThreadedCamera
 
 class ThreadedBoson(ThreadedCamera):
-    def __init__(self, port=None, baudrate=921600, loglevel=logging.WARNING):
+    def __init__(self, device=None, port=None, baudrate=921600, loglevel=logging.WARNING):
         super(ThreadedBoson, self).__init__()
         self.temperature = None
-        self._connect(port, baudrate, loglevel)
+        self._connect(device, port, baudrate, loglevel)
 
-    def _connect(self, port, baudrate, loglevel):
+    def _connect(self, device, port, baudrate, loglevel):
         try:
             self.camera = Boson(port, baudrate, loglevel)
-            self.camera.setup_video()
+            self.camera.setup_video(device)
             self.camera.grab()
 
             if not self.camera.cap.isOpened():
