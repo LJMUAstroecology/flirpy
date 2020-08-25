@@ -1,4 +1,3 @@
-
 """
 boson.py
 ====================================
@@ -724,13 +723,13 @@ class Boson(Core):
 
         """
         payload = None
-        payload_len = len(data) - 17
+        payload_len = len(data) - 15
 
         if payload_len > 0:
             try:
-                frame = struct.Struct(">BBIII{}sHB".format(payload_len))
+                frame = struct.Struct(">BBIII{}sB".format(payload_len))
                 res = frame.unpack(data)
-                start_marker, channel_id, sequence, function_id, return_code, payload, crc, end_marker = res
+                start_marker, channel_id, sequence, function_id, return_code, payload, end_marker = res
             except Exception as e:
                 self.logger.error(str(e))
                 self.logger.error("Failed to unpack payload")
@@ -748,7 +747,7 @@ class Boson(Core):
                 self.logger.error(str(e))
                 self.logger.error("Failed to unpack payload")
                 return None
-        
+
         if return_code == 0x0203:
             self.logger.warning("Boson response: range error")
         elif return_code == 0x017F:
@@ -777,11 +776,17 @@ class Boson(Core):
         unstuffed_payload = None
 
         if payload_len > 0:
-            unstuffed_payload = self._unstuff(payload)
+            unstuffed_payload = self._unstuff(payload) # data + crc
+
+            frame = struct.Struct(">{}sH".format(len(unstuffed_payload)-2)) # split data, crc
+            unstuffed_payload, crc = frame.unpack(unstuffed_payload)
 
         crc_bytes = self._crc(header_bytes, unstuffed_payload)
 
         if crc != crc_bytes:
+            self.logger.debug("Got crc {}, but expected {}".format(crc, crc_bytes))
+            self.logger.debug("Payload: {}".format(payload))
+            self.logger.debug("Frame: {}".format(data))
             self.logger.warning("Invalid checksum, but data may be OK")
 
         return unstuffed_payload
@@ -793,7 +798,7 @@ class Boson(Core):
         temp = bytearray()
 
         for byte in data:
-            
+
             if sys.version_info[0] < 3:
                 byte = ord(byte)
 
@@ -818,7 +823,7 @@ class Boson(Core):
         temp = bytearray()
         unstuff = False
 
-        for byte in data:
+        for i, byte in enumerate(data):
 
             if sys.version_info[0] < 3:
                 byte = ord(byte)
@@ -827,7 +832,12 @@ class Boson(Core):
                 temp.append(byte + 0xD)
                 unstuff = False
             elif byte == 0x9E:
-                unstuff = True
+                if i == (len(data) - 1):
+                    continue
+                elif data[i+1] in [0x81, 0x91, 0xA1]:
+                    unstuff = True
+                else:
+                    continue
             else:
                 temp.append(byte)
 
@@ -848,7 +858,7 @@ class Boson(Core):
 
             if time.time() - tstart > timeout:
                 break
-        
+
         return frame
 
     def _crc(self, header, payload=None):
@@ -859,7 +869,7 @@ class Boson(Core):
 
         if payload is not None:
             data += bytes(payload)
-        
+
         return binascii.crc_hqx(data, 0x1D0F)
 
     def _send_packet(self, function_id, data=None, receive_size=0):
@@ -901,7 +911,7 @@ class Boson(Core):
 
         if data is not None:
             payload += self._bitstuff(data)
-        
+
         payload += footer_bytes
 
         self.send(payload)
