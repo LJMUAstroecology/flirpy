@@ -57,7 +57,7 @@ def recursive_move(src, dst):
 
 if __name__ == "__main__":
     
-    parser = argparse.ArgumentParser(description='Split all files in folder')
+    parser = argparse.ArgumentParser(description='Split all files in folder', formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-o', '--output', help='Output folder', default="./")
     parser.add_argument('-i', '--input', help='Input file mask, e.g. "/path/*.SEQ" ', default="*.SEQ")
     parser.add_argument('-v', '--verbosity', help='Logging level', default='info')
