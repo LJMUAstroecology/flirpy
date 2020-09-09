@@ -64,37 +64,41 @@ Split all files in folder
 optional arguments:
   -h, --help            show this help message and exit
   -o OUTPUT, --output OUTPUT
-                        Output folder
+                        Output folder (default: ./)
   -i INPUT, --input INPUT
-                        Input file mask, e.g. "/path/*.SEQ"
+                        Input file mask, e.g. "/path/*.SEQ" (default: *.SEQ)
   -v VERBOSITY, --verbosity VERBOSITY
-                        Logging level
+                        Logging level (default: info)
   --preview_format PREVIEW_FORMAT
-                        Output preview format (png, jpg, tiff)
+                        Output preview format (png, jpg, tiff) (default: jpg)
   --rgb RGB             If provided, split videos too e.g. "/path/*.MOV"
+                        (default: )
   --jpeg_quality JPEG_QUALITY
-                        RGB Output quality (0-100)
-  --use_gstreamer       Use Gstreamer for video decoding
-  --width WIDTH         Thermal image width
-  --height HEIGHT       Thermal image height
+                        RGB Output quality (0-100) (default: 80)
+  --use_gstreamer       Use Gstreamer for video decoding (default: False)
+  --width WIDTH         Thermal image width (default: 640)
+  --height HEIGHT       Thermal image height (default: 512)
   --merge_folders       Merge output folders (and remove intermediates
-                        afterwards)
+                        afterwards) (default: True)
   --no_merge_folders    Merge output folders (and remove intermediates
-                        afterwards)
+                        afterwards) (default: True)
   --split_filetypes     Split output files by type (make
-                        raw/preview/radiometric folders)
+                        raw/preview/radiometric folders) (default: True)
   --no_split_filetypes  Split output files by type (make
-                        raw/preview/radiometric folders)
+                        raw/preview/radiometric folders) (default: True)
   --export_meta         Export meta information files (also for geotagging)
+                        (default: True)
   --no_export_meta      Export meta information files (also for geotagging)
-  --export_tiff         Export radiometric tiff files
-  --no_export_tiff      Export radiometric tiff files
-  --export_preview      Export 8-bit preview png files
-  --no_export_preview   Export 8-bit preview png files
-  --skip_thermal        Skip thermal processing
-  --no_skip_thermal     Skip thermal processing
-  --sync_rgb            Attempt to synchronise RGB/IR streams
-  --no_sync_rgb         Attempt to synchronise RGB/IR streams
+                        (default: True)
+  --export_tiff         Export radiometric tiff files (default: True)
+  --no_export_tiff      Export radiometric tiff files (default: True)
+  --export_preview      Export 8-bit preview png files (default: True)
+  --no_export_preview   Export 8-bit preview png files (default: True)
+  --skip_thermal        Skip thermal processing (default: False)
+  --no_skip_thermal     Skip thermal processing (default: False)
+  --sync_rgb            Attempt to synchronise RGB/IR streams (default: False)
+  --no_sync_rgb         Attempt to synchronise RGB/IR streams (default: False)
+
 ```
 
 `split_seqs` accepts either a directory, a specific filename, or a wildcard string (e.g. `"./my/data/flight_*.SEQ"`). If you use wildcards, be sure to enclose the argument in quotes, otherwise your shell will expand the wildcard before running the program and confuse it. If you specify a directoy, all SEQ files in that diretory will be used.
