@@ -47,18 +47,54 @@ Once installed, you can run:
 
 ```bash
 $ split_seqs -h
-usage: split_seqs [-h] [-o OUTPUT] -i INPUT [-v VERBOSITY]
+usage: split_seqs [-h] [-o OUTPUT] [-i INPUT] [-v VERBOSITY]
+                  [--preview_format PREVIEW_FORMAT] [--rgb RGB]
+                  [--jpeg_quality JPEG_QUALITY] [--use_gstreamer]
+                  [--width WIDTH] [--height HEIGHT]
+                  [--merge_folders | --no_merge_folders]
+                  [--split_filetypes | --no_split_filetypes]
+                  [--export_meta | --no_export_meta]
+                  [--export_tiff | --no_export_tiff]
+                  [--export_preview | --no_export_preview]
+                  [--skip_thermal | --no_skip_thermal]
+                  [--sync_rgb | --no_sync_rgb]
 
-Split all files in folder.
+Split all files in folder
 
 optional arguments:
   -h, --help            show this help message and exit
   -o OUTPUT, --output OUTPUT
                         Output folder
   -i INPUT, --input INPUT
-                        Input file mask
+                        Input file mask, e.g. "/path/*.SEQ"
   -v VERBOSITY, --verbosity VERBOSITY
                         Logging level
+  --preview_format PREVIEW_FORMAT
+                        Output preview format (png, jpg, tiff)
+  --rgb RGB             If provided, split videos too e.g. "/path/*.MOV"
+  --jpeg_quality JPEG_QUALITY
+                        RGB Output quality (0-100)
+  --use_gstreamer       Use Gstreamer for video decoding
+  --width WIDTH         Thermal image width
+  --height HEIGHT       Thermal image height
+  --merge_folders       Merge output folders (and remove intermediates
+                        afterwards)
+  --no_merge_folders    Merge output folders (and remove intermediates
+                        afterwards)
+  --split_filetypes     Split output files by type (make
+                        raw/preview/radiometric folders)
+  --no_split_filetypes  Split output files by type (make
+                        raw/preview/radiometric folders)
+  --export_meta         Export meta information files (also for geotagging)
+  --no_export_meta      Export meta information files (also for geotagging)
+  --export_tiff         Export radiometric tiff files
+  --no_export_tiff      Export radiometric tiff files
+  --export_preview      Export 8-bit preview png files
+  --no_export_preview   Export 8-bit preview png files
+  --skip_thermal        Skip thermal processing
+  --no_skip_thermal     Skip thermal processing
+  --sync_rgb            Attempt to synchronise RGB/IR streams
+  --no_sync_rgb         Attempt to synchronise RGB/IR streams
 ```
 
 `split_seqs` accepts either a directory, a specific filename, or a wildcard string (e.g. `"./my/data/flight_*.SEQ"`). If you use wildcards, be sure to enclose the argument in quotes, otherwise your shell will expand the wildcard before running the program and confuse it. If you specify a directoy, all SEQ files in that diretory will be used.
@@ -72,6 +108,8 @@ Files will be extracted to folders with the same base name as the SEQ file, for 
 The tiff images will be geotagged if GPS information is present in the raw data.
 
 Output images are numbered. If SEQ file 1 contains 1800 frames, the first frame from SEQ file 2 will be numbered 1800.
+
+**Be sure to double check the image size you're expecting. Flirpy by default assumes 640x512**
 
 ## Installation
 
