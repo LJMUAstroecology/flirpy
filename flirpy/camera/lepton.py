@@ -109,7 +109,7 @@ class Lepton(Core):
         
         # The order of these calls matters!
         self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y16 "))
-        self.cap.set(cv2.CAP_PROP_CONVERT_RGB, False)
+        self.cap.set(cv2.CAP_PROP_CONVERT_RGB, 0)
         
     def decode_telemetry(self, image, mode="footer"):
         """
