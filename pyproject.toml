@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "flirpy"
-version = "0.1.2"
+version = "0.2.3"
 description = "Flirpy is a Python library for controlling thermal imaging cameras"
 authors = ["Josh Veitch-Michaelis <j.veitchmichaelis@gmail.com>"]
 license = "MIT"
