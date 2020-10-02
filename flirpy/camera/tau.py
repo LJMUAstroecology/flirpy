@@ -629,9 +629,18 @@ class TeaxGrabber(Tau):
                 break
         
         return data[data.find(magic):]
+        
+    def _convert_frame(data, to_temperature=False, width=640):
+        # This is reported by the camera. Some cameras may default to other settings.
+        frame_width =  np.frombuffer(data[5:7], dtype='uint16')[0]
+        
+        # Remove start/end markers and correct if wrong width specified
+        if frame_width - 2 != width:
+            log.warn("Received frame width is {}, expected {}. Please check your camera default resolution."
+                         .format(frame_width, width))
+            width = frame_width
 
-    def _convert_frame(self, data, to_temperature=True):
-        raw_image = np.frombuffer(data[10:], dtype='uint8').reshape((512,2*642))
+        raw_image = np.frombuffer(data[10:], dtype='uint8').reshape((-1,2*(width+2)))
         raw_image = 0x3FFF & raw_image.view('uint16')[:,1:-1]
 
         if to_temperature:
