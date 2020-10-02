@@ -638,7 +638,7 @@ class TeaxGrabber(Tau):
         if frame_width - 2 != width:
             log.warn("Received frame width is {}, expected {}. Please check your camera default resolution."
                          .format(frame_width, width))
-            width = frame_width
+            width = frame_width - 2
 
         raw_image = np.frombuffer(data[10:], dtype='uint8').reshape((-1,2*(width+2)))
         raw_image = 0x3FFF & raw_image.view('uint16')[:,1:-1]
