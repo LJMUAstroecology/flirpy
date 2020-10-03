@@ -548,7 +548,7 @@ class TeaxGrabber(Tau):
         self.dev = usb.core.find(idVendor=vid, idProduct=pid)
 
         self._ftdi = None
-        self.frame_size = 2*height*width+2058 # probably wrong for 320x256
+        self.frame_size = 2*height*width+10+4*height # 10 byte header, 4 bytes pad per row
         
         if self.dev is not None:
             self.connect()
