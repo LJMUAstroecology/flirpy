@@ -630,7 +630,7 @@ class TeaxGrabber(Tau):
         
         return data[data.find(magic):]
         
-    def _convert_frame(data, to_temperature=False, width=640):
+    def _convert_frame(self, data, to_temperature=False, width=640):
         # This is reported by the camera. Some cameras may default to other settings.
         frame_width =  np.frombuffer(data[5:7], dtype='uint16')[0]
         
