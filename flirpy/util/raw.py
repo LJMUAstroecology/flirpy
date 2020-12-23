@@ -23,11 +23,11 @@ def raw2temp(raw, meta):
     PF = float(meta["Planck F"])
     E = float(meta["Emissivity"])
     IRT = float(meta["IR Window Transmission"])
-    IRWTemp = float(meta["IR Window Temperature"].split('C')[0])
-    OD = float(meta["Object Distance"].split('m')[0])
-    ATemp = float(meta["Atmospheric Temperature"].split('C')[0])
-    RTemp = float(meta["Reflected Apparent Temperature"].split('C')[0])
-    humidity = float(meta["Relative Humidity"].split('%')[0])
+    IRWTemp = float(meta["IR Window Temperature"])
+    OD = float(meta["Object Distance"])
+    ATemp = float(meta["Atmospheric Temperature"])
+    RTemp = float(meta["Reflected Apparent Temperature"])
+    humidity = float(meta["Relative Humidity"])
 
     # Equations to convert to temperature
     # See http://130.15.24.88/exiftool/forum/index.php/topic,4898.60.html
@@ -42,7 +42,7 @@ def raw2temp(raw, meta):
 
     #tau1 = ATX*np.exp(-np.sqrt(OD/2))
     tau1 = ATX*np.exp(-np.sqrt(OD/2)*(ATA1+ATB1*np.sqrt(water)))+(1-ATX)*np.exp(-np.sqrt(OD/2)*(ATA2+ATB2*np.sqrt(water)))
-    tau2 = ATX*np.exp(-np.sqrt(OD/2)*(ATA1+ATB1*np.sqrt(water)))+(1-ATX)*np.exp(-np.sqrt(OD/2)*(ATA2+ATB2*np.sqrt(water)))
+    tau2 = tau1
 
     # transmission through atmosphere - equations from Minkina and Dudzik's Infrared Thermography Book
     # Note: for this script, we assume the thermal window is at the mid-point (OD/2) between the source
@@ -54,17 +54,27 @@ def raw2temp(raw, meta):
     raw_atm1 = PR1/(PR2*(np.exp(PB/(ATemp+273.15))-PF))-PO # radiance from the atmosphere (before the window)
     raw_atm1_attn = (1-tau1)/E/tau1*raw_atm1 # attn = the attenuated radiance (in raw units) 
 
-    raw_window = PR1/(PR2*(math.exp(PB/(IRWTemp+273.15))-PF))-PO
-    raw_window_attn = window_emissivity/E/tau1/IRT*raw_window
+    raw_window = PR1/(PR2*(np.exp(PB/(IRWTemp+273.15))-PF))-PO
+    einv = 1./E/tau1/IRT
+    raw_window_attn = window_emissivity*einv*raw_window
 
-    raw_refl2 = PR1/(PR2*(np.exp(PB/(RTemp+273.15))-PF))-PO   
-    raw_refl2_attn = window_reflectivity/E/tau1/IRT*raw_refl2
+    raw_refl2 = raw_refl   
+    raw_refl2_attn = window_reflectivity*einv*raw_refl2
 
-    raw_atm2 = PR1/(PR2*(np.exp(PB/(ATemp+273.15))-PF))-PO
-    raw_atm2_attn = (1-tau2)/E/tau1/IRT/tau2*raw_atm2
+    raw_atm2 = raw_atm1
+    ediv = einv/tau2
+    raw_atm2_attn = (1-tau2)*ediv*raw_atm2
 
-    raw_object = raw/E/tau1/IRT/tau2-raw_atm1_attn-raw_atm2_attn-raw_window_attn-raw_refl_attn-raw_refl2_attn
+    # These last steps are pretty slow and 
+    # could probably be sped up a lot
+    raw_sub = -raw_atm1_attn-raw_atm2_attn-raw_window_attn-raw_refl_attn-raw_refl2_attn
+    raw_object = np.add(np.multiply(raw, ediv), raw_sub)
 
-    temp = PB/np.log(PR1/(PR2*(raw_object+PO))+PF)-273.15
+    raw_object = np.add(raw_object, PO)
+    raw_object = np.multiply(raw_object, PR2)
+    raw_object_inv = np.multiply(np.reciprocal(raw_object), PR1)
+    raw_object_inv = np.add(raw_object_inv, PF)    
+    raw_object_log = np.log(raw_object_inv)
+    temp = np.multiply(np.reciprocal(raw_object_log), PB)
 
-    return temp
+    return temp - 273.15

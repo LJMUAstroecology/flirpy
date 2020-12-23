@@ -5,6 +5,8 @@ numpy
 pytest
 pyudev
 psutil
+libusb
 pyusb
 pyftdi
 natsort
+Pillow

@@ -16,8 +16,7 @@ class TestFff:
         assert len(image.shape) == 2
 
     def test_read_radiometric_image(self):
-        meta = Exiftool().meta_from_file(self.test_data_meta)
-        image = self.frame.get_radiometric_image(meta)
+        image = self.frame.get_radiometric_image()
         assert len(image.shape) == 2
 
     def test_fff_gps(self):

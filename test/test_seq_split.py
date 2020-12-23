@@ -10,7 +10,7 @@ else:
 import glob
 import cv2
 
-from flirpy.io.seq import splitter
+from flirpy.io.seq import Splitter
 
 class TestSeqSplit:
     def setup_method(self):
@@ -24,11 +24,11 @@ class TestSeqSplit:
         self.tempdir.cleanup()
 
     def test_output_folder(self):
-        self.sp = splitter(self.output_folder)
+        self.sp = Splitter(self.output_folder)
         assert os.path.exists(self.output_folder)
 
     def test_process_seq_split(self):
-        self.sp = splitter(self.output_folder)
+        self.sp = Splitter(self.output_folder)
 
         self.sp.split_folders = True
         self.sp.process(self.test_data_path)
@@ -43,7 +43,7 @@ class TestSeqSplit:
         assert len(glob.glob(os.path.join(self.output_folder, "test", "radiometric", "*.tiff"))) > 0
 
     def test_raw_is_16_bit(self):
-        self.sp = splitter(self.output_folder)
+        self.sp = Splitter(self.output_folder)
         self.sp.process(self.test_data_path)
 
         raw_files = glob.glob(os.path.join(self.output_folder, "test", "radiometric", "*.tiff"))
@@ -53,12 +53,12 @@ class TestSeqSplit:
 
 
     def test_process_no_mmap(self):
-        self.sp = splitter(self.output_folder)
+        self.sp = Splitter(self.output_folder)
         self.sp.use_mmap = False
         self.sp.process(self.test_data_path)
 
     def test_process_seq_no_split(self):
-        self.sp = splitter(self.output_folder)
+        self.sp = Splitter(self.output_folder)
 
         self.sp.split_filetypes = False
         self.sp.process(self.test_data_path)
