@@ -11,7 +11,7 @@ It aims to be a one-stop-shop to:
 
 * Interact and query cameras via serial
 * Capture raw images
-* Convert FLIR file formats (e.g. seq, fff, tmc, tfc) to geotagged readable images
+* Convert FLIR file formats (e.g. seq, fff) to geotagged readable images
 * Convert raw images to radiometric images
 * Extract and plot GPS traces from image sequences (e.g. from drones)
 
