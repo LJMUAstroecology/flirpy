@@ -92,12 +92,17 @@ class Boson(Core):
         self.logger = logging.getLogger(__name__)
 
         if port is None:
-            port = self.find_serial_device()
-            if port is not None:
+            #port = self.find_serial_device()
+            ports, sns = self.get_serial_device_list()
+            try:
+                port = ports[0] # take first
                 self.connect(port, baudrate)
 
                 if self.conn.is_open:
                     self.logger.info("Connected")
+            except IndexError:
+                self.logger.info("No Boson device found on any COM port")
+
         else:
             self.connect(port, baudrate)
             if self.conn.is_open:
@@ -128,6 +133,29 @@ class Boson(Core):
         return port
 
     @classmethod
+    def get_serial_device_list(self):
+        """
+        Attempts to find and return a list of the serial ports that has a Boson connection
+
+        Returns
+        -------
+            list of string
+                serial port name
+            list of int
+                Boson serial number
+        """
+        device_list = list_ports.comports()
+
+        VID = 0x09CB
+        PID = 0x4007
+
+        ports = [device.device for device in device_list if device.vid == VID and device.pid == PID]
+        sns = [int(device.serial_number) for device in device_list if device.vid == VID and device.pid == PID]
+
+        return ports, sns
+
+
+    @classmethod
     def find_video_device(self):
         """
         Attempts to automatically detect which video device corresponds to the Boson by searching for the PID and VID.
@@ -141,11 +169,10 @@ class Boson(Core):
         res = None
 
         if sys.platform.startswith('win32'):
-            device_check_path = pkg_resources.resource_filename('flirpy', 'bin/find_cameras.exe')
-            device_id = int(subprocess.check_output([device_check_path, "FLIR Video"]).decode())
-            
-            if device_id >= 0:
-                return device_id
+            device_ids = self.find_video_devices_win32()
+            if device_ids[0] >= 0:
+                res = device_ids[0]
+            return res
 
         elif sys.platform == "darwin":
             output = subprocess.check_output(["system_profiler", "SPCameraDataType"]).decode()
@@ -194,7 +221,29 @@ class Boson(Core):
                 res = dev[0]
 
         return res
-        
+
+    @classmethod
+    def find_video_devices_win32(self):
+        """
+        Attempts to automatically detect all video devices with friendlyName="FLIR Video" = Boson,
+        by searching for video devices with this friendlyName. PID, VID is not considered here.
+        This only works for windows
+
+        Returns
+        -------
+            list of int
+                device number
+        """
+
+        device_ids = []
+
+        if sys.platform.startswith('win32'):
+            device_check_path = pkg_resources.resource_filename('flirpy', 'bin/find_cameras.exe')
+            device_id_str = subprocess.check_output([device_check_path, "FLIR Video"])
+            device_ids = [int(s) for s in device_id_str.split() if s not in [""]]
+
+        return device_ids
+
     def setup_video(self, device_id=None):
         """
         Setup the camera for video/frame capture.
@@ -205,8 +254,10 @@ class Boson(Core):
 
         if device_id is None:
             self.logger.debug("Locating cameras")
-            device_id = self.find_video_device()
-        
+            dev, sn = self.find_video_devices_win32()
+            #device_id = self.find_video_device()
+            device_id = dev[0]
+
         if device_id is None:
             raise ValueError("Boson not connected.")
         else:

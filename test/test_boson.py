@@ -3,9 +3,12 @@ import flirpy.camera.boson
 import pytest
 import os
 import time
-
+"""
+The modified find_cameras.exe is not compatible with the previous!
+"""
 if Boson.find_video_device() is None:
     pytest.skip("Boson not connected, skipping tests", allow_module_level=True)
+
 
 def test_open_boson():
    camera = Boson()
@@ -96,3 +99,17 @@ def test_ffc_mode_auto():
         mode = camera.get_ffc_mode()
         assert mode == flirpy.camera.boson.FLR_BOSON_AUTO_FFC
 
+def test_get_video_ports():
+    import logging
+    with Boson(loglevel=logging.DEBUG) as camera:
+        print(camera.find_video_devices_win32())
+
+def test_get_com_ports():
+    import logging
+    with Boson(loglevel=logging.DEBUG) as camera:
+        print(camera.get_serial_device_list())
+
+
+if __name__== "__main__" :
+    test_get_video_ports()
+    test_get_com_ports()
