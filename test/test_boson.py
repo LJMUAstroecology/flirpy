@@ -111,5 +111,6 @@ def test_get_com_ports():
 
 
 if __name__== "__main__" :
+    test_capture_windows()
     test_get_video_ports()
     test_get_com_ports()

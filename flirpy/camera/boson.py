@@ -254,7 +254,7 @@ class Boson(Core):
 
         if device_id is None:
             self.logger.debug("Locating cameras")
-            dev, sn = self.find_video_devices_win32()
+            dev = self.find_video_devices_win32()
             #device_id = self.find_video_device()
             device_id = dev[0]
 
