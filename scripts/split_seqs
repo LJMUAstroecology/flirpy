@@ -10,7 +10,7 @@ import natsort
 import cv2
 import shutil
 from tqdm import tqdm
-import time
+
 
 def add_bool_arg(parser, name, help_string="", default=False):
     # https://stackoverflow.com/a/31347222
@@ -18,6 +18,7 @@ def add_bool_arg(parser, name, help_string="", default=False):
     group.add_argument('--' + name, dest=name, help=help_string, action='store_true')
     group.add_argument('--no_' + name, dest=name, help=help_string, action='store_false')
     parser.set_defaults(**{name:default})
+
 
 def recursive_copy(src, dst):
 
@@ -37,6 +38,7 @@ def recursive_copy(src, dst):
     
     return
 
+
 def recursive_move(src, dst):
     # https://stackoverflow.com/a/7420617/395457
 
@@ -54,6 +56,7 @@ def recursive_move(src, dst):
                     continue
                 os.remove(dst_file)
             shutil.move(src_file, dst_dir)
+
 
 if __name__ == "__main__":
     
@@ -97,10 +100,8 @@ if __name__ == "__main__":
     for f in files:
         logger.info("Loading: {}".format(f))
     
-    splitter = flirpy.io.seq.splitter(output_folder,
-                    preview_format=args.preview_format,
-                    width=args.width,
-                    height=args.height)
+    splitter = flirpy.io.seq.Splitter(output_folder,
+                    preview_format=args.preview_format)
     splitter.split_filetypes = args.split_filetypes
     splitter.export_meta = args.export_meta
     splitter.export_tiff = args.export_tiff
