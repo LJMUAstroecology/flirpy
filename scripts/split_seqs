@@ -78,7 +78,7 @@ if __name__ == "__main__":
 
     logger = logging.getLogger(__name__)
 
-    if args.verbosity is not 'quiet':
+    if args.verbosity != 'quiet':
         numeric_level = getattr(logging, args.verbosity.upper(), None)
         if not isinstance(numeric_level, int):
             raise ValueError('Invalid log level: %s' % args.verbosity)
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     output_folder = os.path.abspath(args.output)
     input_mask = args.input
 
-    if output_folder is not "./":
+    if output_folder != "./":
         os.makedirs(output_folder, exist_ok=True)
 
     files = natsort.natsorted(glob.glob(input_mask))
