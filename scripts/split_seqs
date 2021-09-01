@@ -65,8 +65,6 @@ if __name__ == "__main__":
     parser.add_argument('--rgb', help='If provided, split videos too e.g. "/path/*.MOV" ', default="")
     parser.add_argument('--jpeg_quality', help='RGB Output quality (0-100)', type=int, default=80)
     parser.add_argument('--use_gstreamer', help='Use Gstreamer for video decoding', action='store_true')
-    parser.add_argument('--width', help='Thermal image width', type=int, default=640)
-    parser.add_argument('--height', help='Thermal image height', type=int, default=512)
 
     add_bool_arg(parser, name='merge_folders', help_string='Merge output folders (and remove intermediates afterwards)', default=True)
     add_bool_arg(parser, name='split_filetypes', help_string='Split output files by type (make raw/preview/radiometric folders)', default=True)
@@ -97,10 +95,8 @@ if __name__ == "__main__":
     for f in files:
         logger.info("Loading: {}".format(f))
     
-    splitter = flirpy.io.seq.splitter(output_folder,
-                    preview_format=args.preview_format,
-                    width=args.width,
-                    height=args.height)
+    splitter = flirpy.io.seq.Splitter(output_folder,
+                    preview_format=args.preview_format)
     splitter.split_filetypes = args.split_filetypes
     splitter.export_meta = args.export_meta
     splitter.export_tiff = args.export_tiff
