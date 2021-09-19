@@ -57,6 +57,11 @@ class TestSeqSplit:
         self.sp.use_mmap = False
         self.sp.process(self.test_data_path)
 
+    def test_process_with_wh(self):
+        self.sp = Splitter(self.output_folder, width=640, height=512)
+        self.sp.use_mmap = False
+        self.sp.process(self.test_data_path)
+
     def test_process_seq_no_split(self):
         self.sp = Splitter(self.output_folder)
 
