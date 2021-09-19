@@ -1,6 +1,12 @@
 import numpy as np
 import math
 
+def from_string_or_float(value):
+    if type(value) is float:
+        return value
+    else:
+        return float(value.strip().split(" ")[0])
+
 def raw2temp(raw, meta):
     """
     Convert raw pixel values to temperature, if calibration coefficients are known. The
@@ -23,11 +29,11 @@ def raw2temp(raw, meta):
     PF = float(meta["Planck F"])
     E = float(meta["Emissivity"])
     IRT = float(meta["IR Window Transmission"])
-    IRWTemp = float(meta["IR Window Temperature"])
-    OD = float(meta["Object Distance"])
-    ATemp = float(meta["Atmospheric Temperature"])
-    RTemp = float(meta["Reflected Apparent Temperature"])
-    humidity = float(meta["Relative Humidity"])
+    IRWTemp = from_string_or_float(meta["IR Window Temperature"])
+    OD = from_string_or_float(meta["Object Distance"])
+    ATemp = from_string_or_float(meta["Atmospheric Temperature"])
+    RTemp = from_string_or_float(meta["Reflected Apparent Temperature"])
+    humidity = from_string_or_float(meta["Relative Humidity"])
 
     # Equations to convert to temperature
     # See http://130.15.24.88/exiftool/forum/index.php/topic,4898.60.html

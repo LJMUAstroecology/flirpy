@@ -20,7 +20,7 @@ from flirpy.io.fff import Fff
 logger = logging.getLogger(__name__)
 
 class Seq:
-    def __init__(self, input_file):
+    def __init__(self, input_file, height=None, width=None):
         """
         Load a FLIR SEQ file. Currently this must be a SEQ
         file containing FFF files. The resulting object can
@@ -46,6 +46,9 @@ class Seq:
             self.pos[0] = (0, self.pos[1][1])
         elif len(self.pos) == 1:
             self.pos[0] = (0, len(self.seq_blob))
+
+        self.width = width
+        self.height = height
 
     def _get_fff_iterator(self, seq_blob):
         """
@@ -73,11 +76,19 @@ class Seq:
         offset, chunksize = self.pos[index]
         chunk = self.seq_blob[offset:offset+chunksize]
 
-        return Fff(chunk)
+        return Fff(chunk, self.width, self.height)
 
 class Splitter:
     
-    def __init__(self, output_folder="./", exiftool_path=None, start_index=0, step=1, split_folders=True, preview_format="jpg"):
+    def __init__(self,
+                    output_folder="./",
+                    exiftool_path=None,
+                    start_index=0,
+                    step=1,
+                    split_folders=True,
+                    preview_format="jpg",
+                    width=None,
+                    height=None):
         
         self.exiftool = Exiftool(exiftool_path)
             
@@ -91,6 +102,8 @@ class Splitter:
         self.overwrite = True
         self.split_folders = split_folders
         self.split_filetypes = True
+        self.width = width
+        self.height = height
         
         if preview_format in ["jpg", "jpeg", "png", "tiff"]:
             self.preview_format = preview_format
@@ -181,7 +194,11 @@ class Splitter:
         
         logger.debug("Processing {}".format(input_file))
         
-        for frame in tqdm(Seq(input_file)):
+        for count, frame in enumerate(tqdm(Seq(input_file, self.height, self.width))):
+
+            if frame.meta is None:
+                self.frame_count += 1
+                continue
                 
             if self.split_filetypes:
                 self._make_split_folders(output_subfolder)
@@ -196,9 +213,6 @@ class Splitter:
                 filename_preview = os.path.join(output_subfolder, "frame_{:06d}.{}".format(self.frame_count, self.preview_format))
                 filename_meta = os.path.join(output_subfolder, "frame_{0:06d}.txt".format(self.frame_count))
             
-            #if index == 0:
-            #    continue
-
             if self.frame_count % self.step == 0:
 
                 if self.export_meta and self._check_overwrite(filename_fff):
@@ -207,7 +221,17 @@ class Splitter:
                 # Export raw files and/or radiometric convert them
                 if self.export_tiff and self._check_overwrite(filename_tiff):
                     if self.export_radiometric:
-                        image = frame.get_radiometric_image()
+                        
+                        # Use Exiftool to extract metadata
+                        if self.width is not None and self.height is not None:
+                            # Export the first metadata
+                            if count == 0:
+                                self.exiftool.write_meta(filename_fff)
+                                meta = self.exiftool.meta_from_file(filename_meta)
+                        else:
+                            meta = None
+
+                        image = frame.get_radiometric_image(meta=meta)
                         image += 273.15 # Convert to Kelvin
                         image /= 0.04 # Standard FLIR scale factor
                     else:

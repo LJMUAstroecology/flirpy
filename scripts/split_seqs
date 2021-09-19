@@ -65,11 +65,15 @@ if __name__ == "__main__":
     parser.add_argument('--rgb', help='If provided, split videos too e.g. "/path/*.MOV" ', default="")
     parser.add_argument('--jpeg_quality', help='RGB Output quality (0-100)', type=int, default=80)
     parser.add_argument('--use_gstreamer', help='Use Gstreamer for video decoding', action='store_true')
+    parser.add_argument('--copy', help='Copy first, instead of move after split', action='store_true')
+    parser.add_argument('-w', '--width', help='Image width (if unspecified flirpy will attempt to infer from FFF files)', type=int, default=None)
+    parser.add_argument('-h', '--height', help='Image height', type=int, default=None)
 
     add_bool_arg(parser, name='merge_folders', help_string='Merge output folders (and remove intermediates afterwards)', default=True)
     add_bool_arg(parser, name='split_filetypes', help_string='Split output files by type (make raw/preview/radiometric folders)', default=True)
     add_bool_arg(parser, name='export_meta', help_string='Export meta information files (also for geotagging)', default=True)
     add_bool_arg(parser, name='export_tiff', help_string='Export radiometric tiff files', default=True)
+    add_bool_arg(parser, name='export_raw', help_string='Leave raw files (by default copy meta to radiometric)', default=False)
     add_bool_arg(parser, name='export_preview', help_string='Export 8-bit preview png files', default=True)
     add_bool_arg(parser, name='skip_thermal', help_string='Skip thermal processing', default=False)
     add_bool_arg(parser, name='sync_rgb', help_string='Attempt to synchronise RGB/IR streams', default=False)
@@ -108,9 +112,22 @@ if __name__ == "__main__":
         if args.merge_folders:
             logger.info("Merging folders")
             for folder in tqdm(folders):
-                logger.info("Copying: {}".format(folder))
-                recursive_copy(folder, output_folder)
+
+                # Check whether we should remove raw files
+                if not args.export_raw:
+                    logger.info("Removing raw folder from {}".format(folder))
+                    shutil.copy2(os.path.join(folder, "raw", "*.txt"), os.path.join(folder, "radiometric"))
+                    shutil.rmtree(os.path.join(folder, "raw"))
+
+                logger.info("Copying {}".format(folder))
+                if not args.copy:
+                    recursive_copy(folder, output_folder)
+                else:
+                    recursive_move(folder, output_folder)
+
                 shutil.rmtree(folder)
+            
+            
         
     if args.rgb != "":
         os.makedirs(os.path.join(output_folder, "rgb"), exist_ok=True)

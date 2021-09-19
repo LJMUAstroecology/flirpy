@@ -3,12 +3,14 @@ import struct
 import numpy as np
 import sys
 import six
+import logging
 
 from flirpy.util.raw import raw2temp
+logger = logging.getLogger()
 
 class Fff:
 
-    def __init__(self, data):
+    def __init__(self, data, width=None, height=None):
 
         self.image = None
         self.filename = None
@@ -25,9 +27,24 @@ class Fff:
         else:
             raise TypeError("Data should be a bytes object or a string filename")
 
-        self._find_data_offset()
-        self._get_image_size()
-        self.meta = self.get_meta()
+        if width is not None and height is not None:
+            self.width = width
+            self.height = height
+            self.meta = {}
+            self._find_data_offset_simple(width, height)
+        else:
+            try:
+                self._find_data_offset(endianness="be")
+            except:
+                self._find_data_offset(endianness="le")
+
+            self._get_image_size()
+
+            try:
+                self.meta = self.get_meta()
+            except:
+                self.meta = None
+                logger.warn("Failed to get metadata")
 
     def write(self, path):
         with open(path, 'wb') as fff_file:
@@ -65,9 +82,18 @@ class Fff:
         assert res[2] == res[4]+1
         
         return (self.width, self.height)
-        
 
-    def _find_data_offset(self):
+    def _find_data_offset_simple(self, width, height):
+        search = struct.pack("<H", width-1)\
+                    + b"\x00\x00"\
+                    + struct.pack("<H", height-1)
+
+        valid = re.compile(search)
+        res = valid.search(self.data)
+
+        self.data_offset = res.end() + 14
+        
+    def _find_data_offset(self, endianness="be"):
         """
         Analyses the file to locate the offset of the
         data record (i.e. the image). Note the offset
@@ -90,7 +116,11 @@ class Fff:
         # 0x28 - int16u[7] spares
         # 0x34 - int32u[2] reserved
         # 0x3c - int32u checksum
-        s = struct.Struct(">4s16sIII")    
+        if endianness == "le":
+            s = struct.Struct("<4s16sIIIIH7H")
+        else:
+            s = struct.Struct(">4s16sIIIIH7H")
+
         res = s.unpack_from(self.data, 0)
 
         file_format = res[0].decode()
@@ -111,7 +141,10 @@ class Fff:
         # 0x18 - int32u object number = 0 (?)
         # 0x1c - int32u checksum: 0 for no checksum
 
-        s = struct.Struct(">HHIIIIIII")    
+        if endianness == "le":
+            s = struct.Struct("<HHIIIIIII")   
+        else:
+            s = struct.Struct(">HHIIIIIII") 
         res = s.unpack_from(self.data, record_offset)
 
         record_type = res[0]
@@ -119,11 +152,8 @@ class Fff:
 
         if record_subtype == 1:
             self.endianness = "big"
-        elif record_subtype == 2:
-            self.endianness = "little"
         else:
-            print(record_subtype)
-            raise IOError("Unknown FFF record subtype")
+            self.endianness = "little"
 
         record_version = res[2]
         index_id = res[3]
@@ -132,8 +162,18 @@ class Fff:
 
         return self.data_offset
     
-    def get_radiometric_image(self):
-        image = raw2temp(self.get_image(), self.meta)
+    def get_radiometric_image(self, dtype='float', meta=None):
+
+        if meta is None:
+            image = raw2temp(self.get_image(), self.meta)
+        else:
+            image = raw2temp(self.get_image(), meta)
+        
+        if dtype == 'uint16':
+            image += 273.15
+            image /= 0.04
+            image = image.astype('uint16')
+
         return image
 
     def get_image(self):
@@ -158,70 +198,92 @@ class Fff:
         s = struct.Struct("<HHH6xII12x8f24x3f12x5f12x8f36x")    
         res = s.unpack_from(self.data, header_offset)
 
-        meta["Width"] = res[0]
-        meta["Height"] = res[1]
-        meta["Emissivity"] = res[5]
-        meta["Object Distance"] = res[6]
-        meta["Reflected Apparent Temperature"] = res[7] - 273.14
-        meta["Atmospheric Temperature"] = res[8] - 273.14
-        meta["IR Window Temperature"] = res[9] - 273.14
-        meta["IR Window Transmission"] = res[10]
-        meta["Relative Humidity"] = res[12] * 100
-        meta["Planck R1"] = res[13]
-        meta["Planck B"] = res[14]
-        meta["Planck F"] = res[15]
-        meta["Atmospheric Trans Alpha 1"] = res[16]
-        meta["Atmospheric Trans Alpha 2"] = res[17]
-        meta["Atmospheric Trans Beta 1"] = res[18]
-        meta["Atmospheric Trans Beta 2"] = res[19]
-        meta["Atmospheric Trans X"] = res[20]
+        try:
+            meta["Width"] = res[0]
+            meta["Height"] = res[1]
+            meta["Emissivity"] = res[5]
+            meta["Object Distance"] = res[6]
+            meta["Reflected Apparent Temperature"] = res[7] - 273.14
+            meta["Atmospheric Temperature"] = res[8] - 273.14
+            meta["IR Window Temperature"] = res[9] - 273.14
+            meta["IR Window Transmission"] = res[10]
+            meta["Relative Humidity"] = res[12] * 100
+            meta["Planck R1"] = res[13]
+            meta["Planck B"] = res[14]
+            meta["Planck F"] = res[15]
+            meta["Atmospheric Trans Alpha 1"] = res[16]
+            meta["Atmospheric Trans Alpha 2"] = res[17]
+            meta["Atmospheric Trans Beta 1"] = res[18]
+            meta["Atmospheric Trans Beta 2"] = res[19]
+            meta["Atmospheric Trans X"] = res[20]
+        except:
+            logger.warn("Failed to extract radiometric information")
+            logger.warn("String: ", res)
         
         s = struct.Struct("<8f32s16s16s16s32s16s16sf")
         res = s.unpack_from(self.data, header_offset+0x90)
-
-        meta["Camera Temperature Range Max"] = res[0]
-        meta["Camera Temperature Range Min"] = res[1]
-        meta["Camera Temperature Max Clip"] = res[2]
-        meta["Camera Temperature Min Clip"] = res[3]
-        meta["Camera Temperature Max Warn"] = res[4]
-        meta["Camera Temperature Min Warn"] = res[5]
-        meta["Camera Temperature Max Saturated"] = res[6]
-        meta["Camera Temperature Min Saturated"] = res[7]
+        try:
+            meta["Camera Temperature Range Max"] = res[0]
+            meta["Camera Temperature Range Min"] = res[1]
+            meta["Camera Temperature Max Clip"] = res[2]
+            meta["Camera Temperature Min Clip"] = res[3]
+            meta["Camera Temperature Max Warn"] = res[4]
+            meta["Camera Temperature Min Warn"] = res[5]
+            meta["Camera Temperature Max Saturated"] = res[6]
+            meta["Camera Temperature Min Saturated"] = res[7]
+        except UnicodeDecodeError:
+            logger.warn("Failed to extract camera temperature information")
+            logger.warn("String: ", res)
         
         s = struct.Struct("<32s16s16s16s32s16s16s")
         res = s.unpack_from(self.data, header_offset+0xd4)
         
-        meta["Camera Model"] = res[0].decode()
-        meta["Camera Part Number"] = res[1].decode()
-        meta["Camera Serial Number"] = res[2].decode()
-        meta["Camera Software"] = res[3].decode()
+        try:
+            meta["Camera Model"] = res[0].decode()
+            meta["Camera Part Number"] = res[1].decode()
+            meta["Camera Serial Number"] = res[2].decode()
+            meta["Camera Software"] = res[3].decode()
+        except UnicodeDecodeError:
+            logger.warn("Failed to extract camera information")
+            logger.warn("String: ", res)
         
         s = struct.Struct("<32s16s16s4xf")
         res = s.unpack_from(self.data, header_offset+0x170)
-        meta["Lens Model"] = res[0].decode()
-        meta["Lens Part Number"] = res[1].decode()
-        meta["Lens Serial Number"] = res[2].decode()
-        meta["Field of View"] = res[3]
+        try:
+            meta["Lens Model"] = res[0].decode()
+            meta["Lens Part Number"] = res[1].decode()
+            meta["Lens Serial Number"] = res[2].decode()
+            meta["Field of View"] = res[3]
+        except UnicodeDecodeError:
+            logger.warn("Failed to extract lens details")
+            logger.warn("String", res)
         
         s = struct.Struct("<if")
         res = s.unpack_from(self.data, header_offset+0x308)
-        meta["Planck O"] = res[0]
-        meta["Planck R2"] = res[1]
+        try:
+            meta["Planck O"] = res[0]
+            meta["Planck R2"] = res[1]
+        except UnicodeDecodeError:
+            logger.warn("Failed to extract Planck O or R2")
+            logger.warn("String", res)
         
         s = struct.Struct("<HH")
         res = s.unpack_from(self.data, header_offset+0x310)
-        meta["Raw Value Range Minimum"] = res[0]
-        meta["Raw Value Range Maximum"] = res[1]
+        try:
+            meta["Raw Value Range Minimum"] = res[0]
+            meta["Raw Value Range Maximum"] = res[1]
+        except UnicodeDecodeError:
+            logger.warn("Failed to extract raw value information")
+            logger.warn("String", res)
         
         s = struct.Struct("<H2xH")
         res = s.unpack_from(self.data, header_offset+0x338)
-        meta["Raw Value Range Median"] = res[0]
-        meta["Raw Value Range Range"] = res[1]
-        
-        s = struct.Struct("<H2xH")
-        res = s.unpack_from(self.data, header_offset+0x338)
-        meta["Raw Value Range Median"] = res[0]
-        meta["Raw Value Range Range"] = res[1]
+        try:
+            meta["Raw Value Range Median"] = res[0]
+            meta["Raw Value Range Range"] = res[1]
+        except UnicodeDecodeError:
+            logger.warn("Failed to extract raw value information")
+            logger.warn("String", res)
         
         return meta
     
