@@ -185,6 +185,9 @@ class Fff:
 
     def get_meta(self):
         """
+
+        Get metadata from FFF file
+        
         These byte offsets are largely poached from Exiftool,
         but this allows us to seek directly into FFFs without
         calling Exiftool externally.
