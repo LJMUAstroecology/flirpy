@@ -4,6 +4,7 @@
 
 [![DOI](https://zenodo.org/badge/146534780.svg)](https://zenodo.org/badge/latestdoi/146534780)
 
+## Introduction
 
 flirpy is a Python library to interact with FLIR thermal imaging cameras and images. If you use flirpy for a research or other publishable application, please cite it using the Zenodo DOI.
 
@@ -13,7 +14,6 @@ It aims to be a one-stop-shop to:
 * Capture raw images
 * Convert FLIR file formats (e.g. seq, fff) to geotagged readable images
 * Convert raw images to radiometric images
-* Extract and plot GPS traces from image sequences (e.g. from drones)
 
 The library has been tested with:
 
@@ -23,6 +23,8 @@ The library has been tested with:
 * FLIR Duo Pro R (image post-processing)
 * TeAx Fusion Zoom (image post-processing)
 * FLIR Lepton (PureThermal board, capture+telemetry only)
+
+**If your camera is not on this list and it does not produce SEQ files, then flirpy probably does not support it. Many of FLIR's cameras use proprietary bluetooth interfaces for control and there are no APIs available.**
 
 Coming soon
 
@@ -122,7 +124,7 @@ By default, the raw folder will be deleted and all the metadata files will be co
 
 The tiff images will be geotagged if GPS information is present in the raw data.
 
-Output images are numbered. If SEQ file 1 contains 1800 frames, the first frame from SEQ file 2 will be numbered 1800.
+Output images are numbered sequentially. If SEQ file 1 contains 1800 frames, the first frame from SEQ file 2 will be numbered 1800.
 
 RGB extraction options are experimental. Generally it's difficult to sync the two streams because they do not start simultaneously and when the IR camera flat fields, it can cause odd discontinuities in the data. If you are familiar with multi-modal video synchronisation, we'd love to hear from you!
 ## Installation
