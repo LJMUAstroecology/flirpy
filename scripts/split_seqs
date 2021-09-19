@@ -66,13 +66,14 @@ if __name__ == "__main__":
     parser.add_argument('--jpeg_quality', help='RGB Output quality (0-100)', type=int, default=80)
     parser.add_argument('--use_gstreamer', help='Use Gstreamer for video decoding', action='store_true')
     parser.add_argument('--copy', help='Copy first, instead of move after split', action='store_true')
-    parser.add_argument('-w', '--width', help='Image width (if unspecified flirpy will attempt to infer from FFF files)', type=int, default=None)
-    parser.add_argument('-h', '--height', help='Image height', type=int, default=None)
+    parser.add_argument('--width', help='Image width (if unspecified flirpy will attempt to infer from FFF files)', type=int, default=None)
+    parser.add_argument('--height', help='Image height', type=int, default=None)
 
     add_bool_arg(parser, name='merge_folders', help_string='Merge output folders (and remove intermediates afterwards)', default=True)
     add_bool_arg(parser, name='split_filetypes', help_string='Split output files by type (make raw/preview/radiometric folders)', default=True)
     add_bool_arg(parser, name='export_meta', help_string='Export meta information files (also for geotagging)', default=True)
-    add_bool_arg(parser, name='export_tiff', help_string='Export radiometric tiff files', default=True)
+    add_bool_arg(parser, name='export_tiff', help_string='Export tiff files', default=True)
+    add_bool_arg(parser, name='export_radiometric', help_string='Export radiometric tiff files', default=True)
     add_bool_arg(parser, name='export_raw', help_string='Leave raw files (by default copy meta to radiometric)', default=False)
     add_bool_arg(parser, name='export_preview', help_string='Export 8-bit preview png files', default=True)
     add_bool_arg(parser, name='skip_thermal', help_string='Skip thermal processing', default=False)
@@ -105,6 +106,7 @@ if __name__ == "__main__":
     splitter.export_meta = args.export_meta
     splitter.export_tiff = args.export_tiff
     splitter.export_preview = args.export_preview
+    splitter.export_radiometric = args.export_radiometric
 
     if not args.skip_thermal:
         folders = splitter.process(files)

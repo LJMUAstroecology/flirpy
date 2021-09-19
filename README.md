@@ -45,16 +45,17 @@ Flirpy includes a convenience utility `split_seqs` for splitting FLIR sequence (
 
 Once installed, you can run:
 
-```bash
-$ split_seqs -h
+``` bash
+python .\scripts\split_seqs -h
 usage: split_seqs [-h] [-o OUTPUT] [-i INPUT] [-v VERBOSITY]
                   [--preview_format PREVIEW_FORMAT] [--rgb RGB]
-                  [--jpeg_quality JPEG_QUALITY] [--use_gstreamer]
+                  [--jpeg_quality JPEG_QUALITY] [--use_gstreamer] [--copy]
                   [--width WIDTH] [--height HEIGHT]
                   [--merge_folders | --no_merge_folders]
                   [--split_filetypes | --no_split_filetypes]
                   [--export_meta | --no_export_meta]
                   [--export_tiff | --no_export_tiff]
+                  [--export_raw | --no_export_raw]
                   [--export_preview | --no_export_preview]
                   [--skip_thermal | --no_skip_thermal]
                   [--sync_rgb | --no_sync_rgb]
@@ -76,8 +77,11 @@ optional arguments:
   --jpeg_quality JPEG_QUALITY
                         RGB Output quality (0-100) (default: 80)
   --use_gstreamer       Use Gstreamer for video decoding (default: False)
-  --width WIDTH         Thermal image width (default: 640)
-  --height HEIGHT       Thermal image height (default: 512)
+  --copy                Copy first, instead of move after split (default:
+                        False)
+  --width WIDTH         Image width (if unspecified flirpy will attempt to
+                        infer from FFF files) (default: None)
+  --height HEIGHT       Image height (default: None)
   --merge_folders       Merge output folders (and remove intermediates
                         afterwards) (default: True)
   --no_merge_folders    Merge output folders (and remove intermediates
@@ -92,14 +96,19 @@ optional arguments:
                         (default: True)
   --export_tiff         Export radiometric tiff files (default: True)
   --no_export_tiff      Export radiometric tiff files (default: True)
+  --export_raw          Leave raw files (by default copy meta to radiometric)
+                        (default: False)
+  --no_export_raw       Leave raw files (by default copy meta to radiometric)
+                        (default: False)
   --export_preview      Export 8-bit preview png files (default: True)
   --no_export_preview   Export 8-bit preview png files (default: True)
   --skip_thermal        Skip thermal processing (default: False)
   --no_skip_thermal     Skip thermal processing (default: False)
   --sync_rgb            Attempt to synchronise RGB/IR streams (default: False)
   --no_sync_rgb         Attempt to synchronise RGB/IR streams (default: False)
-
 ```
+
+**Flirpy includes an experimental FFF interpreter that attempts to load metadata and other information directly from the file headers. If you have trouble splitting your SEQ files, then specify the `width` and `height` parameters in this script and it will fall back to using Exiftool.**
 
 `split_seqs` accepts either a directory, a specific filename, or a wildcard string (e.g. `"./my/data/flight_*.SEQ"`). If you use wildcards, be sure to enclose the argument in quotes, otherwise your shell will expand the wildcard before running the program and confuse it. If you specify a directoy, all SEQ files in that diretory will be used.
 
@@ -109,19 +118,20 @@ Files will be extracted to folders with the same base name as the SEQ file, for 
 * Radiometric 16-bit tiff images
 * Preview 8-bit RGB representations of the radiometric data
 
+By default, the raw folder will be deleted and all the metadata files will be copied to the radiometric folder. This is mostly to save disk space as it's unlikely you need the raw files hanging around. If you do need raw counts for some reason, you can use the `--no_export_radiometric` flag.
+
 The tiff images will be geotagged if GPS information is present in the raw data.
 
 Output images are numbered. If SEQ file 1 contains 1800 frames, the first frame from SEQ file 2 will be numbered 1800.
 
-**Be sure to double check the image size you're expecting. Flirpy by default assumes 640x512**
-
+RGB extraction options are experimental. Generally it's difficult to sync the two streams because they do not start simultaneously and when the IR camera flat fields, it can cause odd discontinuities in the data. If you are familiar with multi-modal video synchronisation, we'd love to hear from you!
 ## Installation
 
 Flirpy has been tested with Python 3 and _may_ work on Python 2. It is always recommended that you install packages inside a virtualenv or Conda environment.
 
 Simply install using `pip`:
 
-```
+``` bash
 pip install flirpy
 ```
 
@@ -141,6 +151,15 @@ Using `pip` is preferable, as it will let you uninstall the package if you need.
 
 flirpy is distributed with a copy of [Exiftool](https://sno.phy.queensu.ca/~phil/exiftool/) which is used to extract metadata from certain file formats.
 
+For a fast local pip install, e.g. from the repository:
+
+``` bash
+python setup.py bdist_wheel
+pip install flirpy --no-index --find-links ./dist
+```
+
+This will disable pip looking up stuff online and tell it to look in the dist folder for wheels. This is a useful command for testing!
+
 ### Installation on ARM (e.g. Raspberry Pi)
 
 Flirpy mostly works well, and has been tested, on the Raspberry Pi. If you're building from scratch, you need to install a few things manually. Try to use Python 3 if you can.
@@ -155,7 +174,7 @@ You may need to install some dependencies for OpenCV, for example `libjasper-dev
 
 You should also install Exiftool manually with `sudo apt install exiftool`.
 
-If you're on a platorm like Arm64 where `opencv-python-headless` is not available, then bad luck, you need to build OpenCV from scratch. This is straightforward nowadays, but it's a bit involved.
+Nowadays `opencv-python-headless` should exist on most ARM platforms, including `aarch64`.
 
 ## Grab images
 
