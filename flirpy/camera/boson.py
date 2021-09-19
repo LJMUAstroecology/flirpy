@@ -149,7 +149,7 @@ class Boson(Core):
 
         elif sys.platform == "darwin":
             output = subprocess.check_output(["system_profiler", "SPCameraDataType"]).decode()
-            devices = [line.strip() for line in output.decode().split("\n") if line.strip().startswith("Model")]
+            devices = [line.strip() for line in output.split("\n") if line.strip().startswith("Model")]
 
             device_id = 0
 
@@ -670,7 +670,7 @@ class Boson(Core):
         function_id = 0x0005001B
         self._send_packet(function_id)  # Read factory boot settings and set them as current settings
         self.set_pwr_on_defaults()  # Set the factory boot settings as power on settings.
-        self.logger.warn("consider cycling power and reconnecting to camera to insure all factory settings take effect.")
+        self.logger.warn("Consider cycling power and reconnecting to camera to insure all factory settings take effect.")
 
         return
 

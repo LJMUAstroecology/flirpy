@@ -38,7 +38,7 @@ class Lepton(Core):
 
         elif sys.platform == "darwin":
             output = subprocess.check_output(["system_profiler", "SPCameraDataType"]).decode()
-            devices = [line.strip() for line in output.decode().split("\n") if line.strip().startswith("Model")]
+            devices = [line.strip() for line in output.split("\n") if line.strip().startswith("Model")]
 
             device_id = 0
 
