@@ -154,7 +154,7 @@ class Boson(Core):
             device_id = 0
 
             for device in devices:
-                if device.contains("VendorID_2507") and device.contains("ProductID_16391"):
+                if "VendorID_2507" in device and "ProductID_16391" in device:
                     return device_id
             
         else:
