@@ -704,6 +704,45 @@ class Boson(Core):
 
         return res
 
+    def set_gain_mode(self, gain_mode):
+        """
+        Set the gain mode
+
+        FLR_BOSON_HIGH_GAIN = 0
+        FLR_BOSON_LOW_GAIN = 1
+        FLR_BOSON_AUTO_GAIN = 2
+        FLR_BOSON_DUAL_GAIN = 3
+        FLR_BOSON_MANUAL_GAIN = 4
+        FLR_BOSON_GAINMODE_END = 5
+        """
+
+        function_id = 0x00050014
+        command = struct.pack(">I", int(gain_mode))
+
+        self._send_packet(function_id, data=command)
+    
+    def get_gain_mode(self):
+        """
+        Set the gain mode
+
+        FLR_BOSON_HIGH_GAIN = 0
+        FLR_BOSON_LOW_GAIN = 1
+        FLR_BOSON_AUTO_GAIN = 2
+        FLR_BOSON_DUAL_GAIN = 3
+        FLR_BOSON_MANUAL_GAIN = 4
+        FLR_BOSON_GAINMODE_END = 5
+        """
+
+        function_id = 0x00050015
+
+        res = self._send_packet(function_id)
+        res = self._decode_packet(res, receive_size=4)
+
+        if res is not None and len(res) == 4:
+            res = struct.unpack(">I", res)[0]
+
+        return res
+
     def _decode_packet(self, data, receive_size=0):
         """
         Decodes a data packet from the camera.
