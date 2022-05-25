@@ -1,4 +1,4 @@
-flirpy/bin/* linguist-vendored
+flirpy/bin/** linguist-vendored
 
 # Basic .gitattributes for a python repo.
 
