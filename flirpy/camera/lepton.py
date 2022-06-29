@@ -43,7 +43,7 @@ class Lepton(Core):
             device_id = 0
 
             for device in devices:
-                if device.contains("VendorID_1E4E") and device.contains("ProductID_0100"):
+                if "VendorID_1E4E" in device and "ProductID_0100" in device:
                     return device_id
             
         else:
