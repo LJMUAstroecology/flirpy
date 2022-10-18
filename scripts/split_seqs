@@ -118,7 +118,9 @@ if __name__ == "__main__":
                 # Check whether we should remove raw files
                 if not args.export_raw:
                     logger.info("Removing raw folder from {}".format(folder))
-                    shutil.copy2(os.path.join(folder, "raw", "*.txt"), os.path.join(folder, "radiometric"))
+                    for txt_file in glob.glob(os.path.join(folder, "raw", "*.txt")):
+                        shutil.copy2(txt_file, os.path.join(folder, "radiometric"))
+
                     shutil.rmtree(os.path.join(folder, "raw"))
 
                 logger.info("Copying {}".format(folder))
