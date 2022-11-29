@@ -95,4 +95,8 @@ def test_ffc_mode_auto():
         camera.set_ffc_auto()
         mode = camera.get_ffc_mode()
         assert mode == flirpy.camera.boson.FLR_BOSON_AUTO_FFC
-
+def test_agc_mode():
+    with Boson() as camera:
+        camera.get_agc_mode()
+        agc_mode = camera.get_agc_mode()
+        assert agc_mode != ""
