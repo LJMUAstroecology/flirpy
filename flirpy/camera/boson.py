@@ -958,4 +958,30 @@ class Boson(Core):
 
         return res
 
+    def get_agc_mode(self):
+        """
+        FLR_AGC_MODE_NORMAL = 0
+        FLR_AGC_MODE_HOLD = 1
+        FLR_AGC_MODE_THRESHOLD = 2
+        FLR_AGC_MODE_AUTO_BRIGHT = 3
+        FLR_AGC_MODE_AUTO_LINEAR = 4
+        FLR_AGC_MODE_MANUAL = 5
+        FLR_AGC_MODE_END = 6
+        """
+        function_id = 0x00090032
 
+        res = self._send_packet(function_id)
+        res = self._decode_packet(res, receive_size=4)
+
+        if res is not None and len(res) == 4:
+            res = struct.unpack(">I", res)[0]
+
+        return res
+    
+    def set_agc_mode(self, agc_mode):
+        
+        function_id=0x00090033
+        
+        command = struct.pack(">I", int(agc_mode))
+
+        self._send_packet(function_id, data=command)
