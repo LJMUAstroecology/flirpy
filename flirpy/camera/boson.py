@@ -959,10 +959,10 @@ class Boson(Core):
         return res
 
     def get_agc_mode(self):
-      """
-      Get current Automatic Gain Control mode
-      """
-      
+        """
+        Get current Automatic Gain Control mode
+        """
+          
         """
         FLR_AGC_MODE_NORMAL = 0
         FLR_AGC_MODE_HOLD = 1
@@ -983,11 +983,11 @@ class Boson(Core):
         return res
     
     def set_agc_mode(self, agc_mode):
-      """
-      Set current Automatic Gain Control mode
-      """
+        """
+        Set current Automatic Gain Control mode
+        """
         function_id=0x00090033
-        
+           
         command = struct.pack(">I", int(agc_mode))
 
         self._send_packet(function_id, data=command)
