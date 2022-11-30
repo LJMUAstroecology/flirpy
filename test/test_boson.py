@@ -95,8 +95,46 @@ def test_ffc_mode_auto():
         camera.set_ffc_auto()
         mode = camera.get_ffc_mode()
         assert mode == flirpy.camera.boson.FLR_BOSON_AUTO_FFC
-def test_agc_mode():
+
+def test_agc_mode_normal():
     with Boson() as camera:
-        camera.get_agc_mode()
+        camera.set_agc_mode(0)
         agc_mode = camera.get_agc_mode()
-        assert agc_mode != ""
+        assert agc_mode == flirpy.camera.boson.FLR_AGC_MODE_NORMAL
+               
+def test_agc_mode_hold():
+    with Boson() as camera:
+        camera.set_agc_mode(1)
+        agc_mode = camera.get_agc_mode()
+        assert agc_mode == flirpy.camera.boson.FLR_AGC_MODE_HOLD
+        
+def test_agc_mode_threshold():
+    with Boson() as camera:
+        camera.set_agc_mode(2)
+        agc_mode = camera.get_agc_mode()
+        assert agc_mode == flirpy.camera.boson.FLR_AGC_MODE_THRESHOLD
+"""
+def test_agc_mode_auto_bright():
+    with Boson() as camera:
+        camera.set_agc_mode(3)
+        agc_mode = camera.get_agc_mode()
+        assert agc_mode == flirpy.camera.boson.FLR_AGC_MODE_AUTO_BRIGHT
+
+def test_agc_mode_auto_linear():
+    with Boson() as camera:
+        camera.set_agc_mode(4)
+        agc_mode = camera.get_agc_mode()
+        assert agc_mode == flirpy.camera.boson.FLR_AGC_MODE_AUTO_LINEAR
+ 
+def test_agc_mode_auto_manual():
+    with Boson() as camera:
+        camera.set_agc_mode(5)
+        agc_mode = camera.get_agc_mode()
+        assert agc_mode == flirpy.camera.boson.FLR_AGC_MODE_MANUAL
+
+def test_agc_mode_auto_end():
+    with Boson() as camera:
+        camera.set_agc_mode(6)
+        agc_mode = camera.get_agc_mode()
+        assert agc_mode == flirpy.camera.boson.FLR_AGC_MODE_AUTO_END
+"""
