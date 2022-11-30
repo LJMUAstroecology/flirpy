@@ -28,6 +28,16 @@ FLR_BOSON_FFC_IN_PROGRESS = 2
 FLR_BOSON_FFC_COMPLETE = 3
 FLR_BOSON_FFCSTATUS_END = 4
 
+# AGC Mode Enum
+FLR_AGC_MODE_NORMAL = 0
+FLR_AGC_MODE_HOLD = 1
+FLR_AGC_MODE_THRESHOLD = 2
+#these do not work
+FLR_AGC_MODE_AUTO_BRIGHT = 3
+FLR_AGC_MODE_AUTO_LINEAR = 4
+FLR_AGC_MODE_MANUAL = 5
+FLR_AGC_MODE_END = 6
+
 crc_table = [
    0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
    0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C, 0xD1AD, 0xE1CE, 0xF1EF,
@@ -961,16 +971,6 @@ class Boson(Core):
     def get_agc_mode(self):
         """
         Get current Automatic Gain Control mode
-        """
-          
-        """
-        FLR_AGC_MODE_NORMAL = 0
-        FLR_AGC_MODE_HOLD = 1
-        FLR_AGC_MODE_THRESHOLD = 2
-        FLR_AGC_MODE_AUTO_BRIGHT = 3
-        FLR_AGC_MODE_AUTO_LINEAR = 4
-        FLR_AGC_MODE_MANUAL = 5
-        FLR_AGC_MODE_END = 6
         """
         function_id = 0x00090032
 
