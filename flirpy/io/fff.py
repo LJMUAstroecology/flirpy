@@ -1,8 +1,6 @@
 import re
 import struct
 import numpy as np
-import sys
-import six
 import logging
 
 from flirpy.util.raw import raw2temp
