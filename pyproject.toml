@@ -1,29 +1,43 @@
-[tool.poetry]
+[project]
 name = "flirpy"
+description = "Flirpy"
 version = "0.3.0"
-description = "Flirpy is a Python library for controlling thermal imaging cameras"
-authors = ["Josh Veitch-Michaelis <j.veitchmichaelis@gmail.com>"]
-license = "MIT"
-readme = "README.md"
-homepage = "https://github.com/LJMUAstroEcology/flirpy"
-repository = "https://github.com/LJMUAstroEcology/flirpy"
-documentation = "https://flirpy.readthedocs.io/en/latest/?badge=latest"
-include = ["flirpy/bin/**"]
+authors = [
+    { name = "Josh Veitch-Michaelis", email = "jveitchmichaelis@gmail.com" }
+]
 
-[tool.poetry.dependencies]
-python = "~2.7 || ^3.5"
-pyserial = "^3.4"
-tqdm = "^4.42"
-opencv-python-headless = "^4.0"
-pyudev = "^0.22.0"
-psutil = "^5.6.7"
-pyusb = "^1.0.2"
-pyftdi = "^0.51.2"
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+    "coverage-badge"
+]
 
-[tool.poetry.dev-dependencies]
-pytest = "^5.3"
-pytest-cov = "^2.8"
+[tool.black]
+line-length = 88
 
-#[build-system]
-#requires = ["poetry"]
-#build-backend = "poetry.masonry.api"
+[tool.isort]
+profile = "black"
+
+[tool.pylint.MASTER]
+py-version = "3.10"
+jobs = 2
+load-plugins = ["pylint.extensions.docparams", "pylint.extensions.typing"]
+disable = ["line-too-long"]
+
+[tool.pytest.ini_options]
+addopts = [
+    "-x",
+    "--junitxml=reports/junit/junit.xml",
+    "--cov=flirpy",
+    "--color=yes",
+    "--verbose",
+    "--durations=0"
+]
+testpaths = [
+    "test"
+]
+
+filterwarnings = [
+    "ignore::DeprecationWarning"
+]

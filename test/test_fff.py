@@ -1,6 +1,8 @@
+import os
+
 from flirpy.io.fff import Fff
 from flirpy.util.exiftool import Exiftool
-import os
+
 
 class TestFff:
     def setup_method(self):
@@ -20,14 +22,14 @@ class TestFff:
         assert len(image.shape) == 2
 
     def test_fff_gps(self):
-        coord =  self.frame.get_gps()
+        coord = self.frame.get_gps()
         assert len(coord) == 9
-    
+
     def test_from_bytes(self):
 
-        with open(self.test_data_fff, 'rb') as infile:
+        with open(self.test_data_fff, "rb") as infile:
             self.frame = Fff(infile.read())
 
             # Check GPS for sanity
-            coord =  self.frame.get_gps()
+            coord = self.frame.get_gps()
             assert len(coord) == 9

@@ -1,1 +1,1 @@
-recursive-include flirpy/bin *
+recursive-include src/flirpy/bin *

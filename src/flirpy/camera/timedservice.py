@@ -1,5 +1,7 @@
 import time
+
 import numpy as np
+
 
 class TimedService:
     """
@@ -18,7 +20,7 @@ class TimedService:
         self.function = function
         self.args = args
         self.last_service = 0
-        self.timeout = 1. / frequency_hz
+        self.timeout = 1.0 / frequency_hz
         self._latency_size = 20
         self._timer_latency = np.zeros(self._latency_size)
         self._function_latency = np.zeros(self._latency_size)
@@ -37,7 +39,9 @@ class TimedService:
             tstart = time.time()
             self.function(*self.args)
 
-            self._function_latency[self.times_called % self._latency_size] = time.time() - tstart
+            self._function_latency[self.times_called % self._latency_size] = (
+                time.time() - tstart
+            )
 
             # Only latency after first call to avoid huge number
             if self.times_called > 0:

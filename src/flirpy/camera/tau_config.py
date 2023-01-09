@@ -1,8 +1,9 @@
 class code:
-    def __init__(self, code = 0, cmd_bytes = 0, reply_bytes = 0):
+    def __init__(self, code=0, cmd_bytes=0, reply_bytes=0):
         self.code = code
         self.cmd_bytes = cmd_bytes
         self.reply_bytes = reply_bytes
+
 
 # General Commands
 
@@ -52,7 +53,7 @@ GET_VIDEO_PALETTE = code(0x10, 0, 2)
 SET_VIDEO_PALETTE = code(0x10, 2, 2)
 
 GET_VIDEO_ORIENTATION = code(0x11, 0, 2)
-SET_VIDEO_ORIENTATION = code(0x11, 2 ,2)
+SET_VIDEO_ORIENTATION = code(0x11, 2, 2)
 
 GET_DIGITAL_OUTPUT_MODE = code(0x12, 0, 2)
 SET_DIGITAL_OUTPUT_MODE = code(0x12, 2, 2)

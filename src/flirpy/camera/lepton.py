@@ -1,14 +1,16 @@
-from flirpy.camera.core import Core
-import sys
-import pkg_resources
-import subprocess
-import cv2
-import struct
 import logging
 import os
+import struct
+import subprocess
+import sys
+
+import cv2
+import pkg_resources
+
+from flirpy.camera.core import Core
+
 
 class Lepton(Core):
-
     def __init__(self, loglevel=logging.WARNING):
         self.cap = None
         self.conn = None
@@ -29,23 +31,33 @@ class Lepton(Core):
 
         res = None
 
-        if sys.platform.startswith('win32'):
-            device_check_path = pkg_resources.resource_filename('flirpy', 'bin/find_cameras.exe')
-            device_id = int(subprocess.check_output([device_check_path, "PureThermal"]).decode())
+        if sys.platform.startswith("win32"):
+            device_check_path = pkg_resources.resource_filename(
+                "flirpy", "bin/find_cameras.exe"
+            )
+            device_id = int(
+                subprocess.check_output([device_check_path, "PureThermal"]).decode()
+            )
 
             if device_id >= 0:
                 return device_id
 
         elif sys.platform == "darwin":
-            output = subprocess.check_output(["system_profiler", "SPCameraDataType"]).decode()
-            devices = [line.strip() for line in output.split("\n") if line.strip().startswith("Model")]
+            output = subprocess.check_output(
+                ["system_profiler", "SPCameraDataType"]
+            ).decode()
+            devices = [
+                line.strip()
+                for line in output.split("\n")
+                if line.strip().startswith("Model")
+            ]
 
             device_id = 0
 
             for device in devices:
                 if "VendorID_1E4E" in device and "ProductID_0100" in device:
                     return device_id
-            
+
         else:
             import pyudev
 
@@ -59,14 +71,14 @@ class Lepton(Core):
                 udev = pyudev.Devices.from_path(context, device)
 
                 try:
-                    vid= udev.properties['ID_VENDOR_ID']
-                    pid = udev.properties['ID_MODEL_ID']
+                    vid = udev.properties["ID_VENDOR_ID"]
+                    pid = udev.properties["ID_MODEL_ID"]
 
                     if vid.lower() == "1e4e" and pid.lower() == "0100":
-                        dev.append(int(device.split('video')[-1]))
+                        dev.append(int(device.split("video")[-1]))
                 except KeyError:
                     pass
-            
+
             # For some reason multiple devices can show up
             if len(dev) > 1:
                 for d in dev:
@@ -92,30 +104,30 @@ class Lepton(Core):
 
         if device_id is None:
             device_id = self.find_video_device()
-        
+
         if device_id is None:
             raise ValueError("Lepton not connected.")
 
-        if sys.platform.startswith('linux'):
+        if sys.platform.startswith("linux"):
             self.cap = cv2.VideoCapture(device_id + cv2.CAP_V4L2)
-        elif sys.platform.startswith('win32'):
+        elif sys.platform.startswith("win32"):
             self.cap = cv2.VideoCapture(device_id + cv2.CAP_DSHOW)
         else:
             # Catch anything else, e.g. Mac?
             self.cap = cv2.VideoCapture(device_id)
 
         if not self.cap.isOpened():
-           raise IOError("Failed to open capture device {}".format(device_id))
-        
+            raise IOError("Failed to open capture device {}".format(device_id))
+
         # The order of these calls matters!
         self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*"Y16 "))
         self.cap.set(cv2.CAP_PROP_CONVERT_RGB, 0)
-        
+
     def decode_telemetry(self, image, mode="footer"):
         """
         Extracts telemetry from an image
         """
-        res = struct.unpack("<2cII16x4h6xIh2xh8xhI4xhhhhhh64xI172x", image[-2,:])
+        res = struct.unpack("<2cII16x4h6xIh2xh8xhI4xhhhhhh64xI172x", image[-2, :])
 
         self.telemetry = res
 
@@ -126,14 +138,14 @@ class Lepton(Core):
         self.revision = res[4:8]
         self.frame_count = res[8]
         self.frame_mean = res[9]
-        self.fpa_temp_k = res[10]/100.
-        self.ffc_temp_k = res[11]/100.
+        self.fpa_temp_k = res[10] / 100.0
+        self.ffc_temp_k = res[11] / 100.0
         self.ffc_elapsed_ms = res[12]
         self.agc_roi = res[13:17]
         self.agc_clip_high = res[17]
         self.agc_clip_low = res[18]
         self.vudeo_format = res[19]
-        
+
     def grab(self, device_id=None, telemetry_mode="footer", strip_telemetry=True):
         """
         Captures and returns an image.
@@ -147,7 +159,7 @@ class Lepton(Core):
 
         Returns
         -------
-            
+
             np.array, or None if an error occurred
                 captured image
         """
@@ -161,13 +173,12 @@ class Lepton(Core):
             self.decode_telemetry(image, telemetry_mode)
 
             if strip_telemetry:
-                image = image[:-2,:]
+                image = image[:-2, :]
         else:
             self.logger.warn("Failed to capture image")
 
         return image
 
-    
     def release(self):
         if self.cap:
             self.cap.release()

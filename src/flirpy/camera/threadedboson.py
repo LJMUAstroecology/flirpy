@@ -1,13 +1,19 @@
-from flirpy.camera.boson import Boson
+import logging
+import time
+import warnings
+
 import cv2
 import numpy as np
-import warnings
-import time
-import logging
-from . threadedcamera import ThreadedCamera
+
+from flirpy.camera.boson import Boson
+
+from .threadedcamera import ThreadedCamera
+
 
 class ThreadedBoson(ThreadedCamera):
-    def __init__(self, device=None, port=None, baudrate=921600, loglevel=logging.WARNING):
+    def __init__(
+        self, device=None, port=None, baudrate=921600, loglevel=logging.WARNING
+    ):
         super(ThreadedBoson, self).__init__()
         self.temperature = None
         self._connect(device, port, baudrate, loglevel)

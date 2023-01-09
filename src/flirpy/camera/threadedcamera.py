@@ -1,9 +1,12 @@
-from threading import Thread, Lock
-import time
-import numpy as np
 import abc
+import time
+from threading import Lock, Thread
+
 import cv2
-from . timedservice import TimedService
+import numpy as np
+
+from .timedservice import TimedService
+
 
 class ThreadedCamera(object):
     """
@@ -11,7 +14,7 @@ class ThreadedCamera(object):
 
     You should subclass this and implement _grab() yourself.
 
-    This class supports adding timer callbacks which can be used for 
+    This class supports adding timer callbacks which can be used for
     diagnostics or other periodic functionality. Note that precise timing
     is not guaranteed. In fact the _minimum_ timing resolution is limited
     by the effective framerate of the camera (since timers are serviced
@@ -36,7 +39,7 @@ class ThreadedCamera(object):
         self.post_callbacks = []
         self.pre_callbacks = []
 
-    def start(self, target_fps = None):
+    def start(self, target_fps=None):
         """
         Start capture thread with an optional target framerate.
 
@@ -63,7 +66,7 @@ class ThreadedCamera(object):
         Main capture loop. This performs the following actions:
 
         * Calculates the timeout for new frames, if throttling is enabled
-        * Tracks inter-frame latency for monitoring against the camera's 
+        * Tracks inter-frame latency for monitoring against the camera's
           expected framerate.
         * Calls the pre-capture hook
         * Requests an image from the camera
@@ -78,7 +81,7 @@ class ThreadedCamera(object):
 
         if self.target_fps:
             self.last_new_frame_time = 0
-            self.new_frame_thresh = 1. / self.target_fps
+            self.new_frame_thresh = 1.0 / self.target_fps
 
         while True:
 
@@ -103,7 +106,7 @@ class ThreadedCamera(object):
 
             # Track frame latency
             self.last_frame_time = time.time()
-            if  self.n_frames > 0:
+            if self.n_frames > 0:
                 idx = self.n_frames % len(self.latency)
                 self.latency[idx] = self.last_frame_time - self.frame_time
 
@@ -117,14 +120,17 @@ class ThreadedCamera(object):
         Check if the new_image flag should be set. This is:
 
         * Every new image, if there is no target fps
-        * Or if throttling is enabled with target fps, whenever the 
+        * Or if throttling is enabled with target fps, whenever the
           timeout occurs (e.g. the elapsed time since the previous new
           image exceeds 1/target fps)
 
         The on_new_capture hook is called afterwards.
 
         """
-        if self.target_fps and (time.time() - self.last_new_frame_time) < self.new_frame_thresh:
+        if (
+            self.target_fps
+            and (time.time() - self.last_new_frame_time) < self.new_frame_thresh
+        ):
             return
         else:
             self.last_new_frame_time = time.time()
@@ -224,7 +230,6 @@ class ThreadedCamera(object):
         """
         for c in self.post_callbacks:
             c(np.array(self.latest_image))
-
 
     def _pre_capture(self):
         """

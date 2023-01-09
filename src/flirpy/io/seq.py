@@ -1,23 +1,24 @@
-
-import numpy as nump
-from PIL import Image
+import logging
 import os
 import re
-import tqdm
-import logging
-from glob import iglob, glob
 import subprocess
+from glob import glob, iglob
+
+import numpy as nump
+import tqdm
+from PIL import Image
 from tqdm.autonotebook import tqdm
 
 try:
-  from pathlib import Path
+    from pathlib import Path
 except ImportError:
-  from pathlib2 import Path  # python 2 backport
+    from pathlib2 import Path  # python 2 backport
 
-from flirpy.util.exiftool import Exiftool
 from flirpy.io.fff import Fff
+from flirpy.util.exiftool import Exiftool
 
 logger = logging.getLogger(__name__)
+
 
 class Seq:
     def __init__(self, input_file, height=None, width=None):
@@ -26,7 +27,7 @@ class Seq:
         file containing FFF files. The resulting object can
         be indexed as a normal array and will return the
         """
-        with open(input_file, 'rb') as seq_file:
+        with open(input_file, "rb") as seq_file:
             self.seq_blob = seq_file.read()
 
         self._fff_it = self._get_fff_iterator(self.seq_blob)
@@ -37,10 +38,10 @@ class Seq:
         # Iterate through sequence to get frame offsets
         for match in self._fff_it:
             index = match.start()
-            chunksize = index-prev_pos
+            chunksize = index - prev_pos
             self.pos.append((index, chunksize))
             prev_pos = index
-        
+
         # Fix up the first chunk size
         if len(self.pos) > 1:
             self.pos[0] = (0, self.pos[1][1])
@@ -53,8 +54,8 @@ class Seq:
     def _get_fff_iterator(self, seq_blob):
         """
         Internal function which returns an iterator containing the
-        indices of the files in the SEQ. Probably this should be 
-        converted to something a bit more intelligent which 
+        indices of the files in the SEQ. Probably this should be
+        converted to something a bit more intelligent which
         actually identifies the size of the records in the file.
         """
         magic_pattern_fff = "\x46\x46\x46\x00".encode()
@@ -74,24 +75,26 @@ class Seq:
         """
 
         offset, chunksize = self.pos[index]
-        chunk = self.seq_blob[offset:offset+chunksize]
+        chunk = self.seq_blob[offset : offset + chunksize]
 
         return Fff(chunk, self.width, self.height)
 
+
 class Splitter:
-    
-    def __init__(self,
-                    output_folder="./",
-                    exiftool_path=None,
-                    start_index=0,
-                    step=1,
-                    split_folders=True,
-                    preview_format="jpg",
-                    width=None,
-                    height=None):
-        
+    def __init__(
+        self,
+        output_folder="./",
+        exiftool_path=None,
+        start_index=0,
+        step=1,
+        split_folders=True,
+        preview_format="jpg",
+        width=None,
+        height=None,
+    ):
+
         self.exiftool = Exiftool(exiftool_path)
-            
+
         self.start_index = start_index
         self.step = step
         self.frame_count = self.start_index
@@ -104,7 +107,7 @@ class Splitter:
         self.split_filetypes = True
         self.width = width
         self.height = height
-        
+
         if preview_format in ["jpg", "jpeg", "png", "tiff"]:
             self.preview_format = preview_format
         else:
@@ -112,10 +115,10 @@ class Splitter:
 
         self.output_folder = os.path.expanduser(output_folder)
         Path(self.output_folder).mkdir(exist_ok=True)
-    
+
     def set_start_index(self, index):
         self.start_index = int(index)
-        
+
     def process(self, file_list):
 
         if isinstance(file_list, str):
@@ -124,11 +127,11 @@ class Splitter:
         file_list = [os.path.expanduser(f) for f in file_list]
 
         logger.info("Splitting {} files".format(len(file_list)))
-        
+
         self.frame_count = self.start_index
 
         folders = []
-        
+
         for seq in tqdm(file_list):
 
             if self.split_folders:
@@ -163,24 +166,34 @@ class Splitter:
             # Copy geotags
             if self.export_tiff:
                 logger.info("Copying tags to radiometric")
-                self.exiftool.copy_meta(folder, filemask=copy_filemask, output_folder=radiometric_folder, ext="tiff")
-            
+                self.exiftool.copy_meta(
+                    folder,
+                    filemask=copy_filemask,
+                    output_folder=radiometric_folder,
+                    ext="tiff",
+                )
+
             if self.export_preview:
                 logger.info("Copying tags to preview")
-                self.exiftool.copy_meta(folder, filemask=copy_filemask, output_folder=preview_folder, ext=self.preview_format)
-    
+                self.exiftool.copy_meta(
+                    folder,
+                    filemask=copy_filemask,
+                    output_folder=preview_folder,
+                    ext=self.preview_format,
+                )
+
         return folders
-        
+
     def _write_tiff(self, filename, data):
         logger.debug("Writing {}", filename)
         Image.fromarray(data.astype("uint16")).save(filename)
 
     def _write_preview(self, filename, data):
-        drange = data.max()-data.min()
-        preview_data = 255.0*((data-data.min())/drange)
+        drange = data.max() - data.min()
+        preview_data = 255.0 * ((data - data.min()) / drange)
         logger.debug("Writing {}", filename)
-        Image.fromarray(preview_data.astype('uint8')).save(filename)
-            
+        Image.fromarray(preview_data.astype("uint8")).save(filename)
+
     def _make_split_folders(self, output_folder):
         Path(os.path.join(output_folder, "raw")).mkdir(exist_ok=True)
         Path(os.path.join(output_folder, "radiometric")).mkdir(exist_ok=True)
@@ -189,39 +202,64 @@ class Splitter:
     def _check_overwrite(self, path):
         exists = os.path.exists(path)
         return (not exists) or (exists and self.overwrite)
-    
+
     def _process_seq(self, input_file, output_subfolder):
-        
+
         logger.debug("Processing {}".format(input_file))
-        
+
         for count, frame in enumerate(tqdm(Seq(input_file, self.height, self.width))):
 
             if frame.meta is None:
                 self.frame_count += 1
                 continue
-                
+
             if self.split_filetypes:
                 self._make_split_folders(output_subfolder)
-                                    
-                filename_fff = os.path.join(output_subfolder, "raw", "frame_{0:06d}.fff".format(self.frame_count))
-                filename_tiff = os.path.join(output_subfolder, "radiometric", "frame_{0:06d}.tiff".format(self.frame_count))
-                filename_preview = os.path.join(output_subfolder, "preview", "frame_{:06d}.{}".format(self.frame_count, self.preview_format))
-                filename_meta = os.path.join(output_subfolder, "raw", "frame_{0:06d}.txt".format(self.frame_count))
+
+                filename_fff = os.path.join(
+                    output_subfolder,
+                    "raw",
+                    "frame_{0:06d}.fff".format(self.frame_count),
+                )
+                filename_tiff = os.path.join(
+                    output_subfolder,
+                    "radiometric",
+                    "frame_{0:06d}.tiff".format(self.frame_count),
+                )
+                filename_preview = os.path.join(
+                    output_subfolder,
+                    "preview",
+                    "frame_{:06d}.{}".format(self.frame_count, self.preview_format),
+                )
+                filename_meta = os.path.join(
+                    output_subfolder,
+                    "raw",
+                    "frame_{0:06d}.txt".format(self.frame_count),
+                )
             else:
-                filename_fff = os.path.join(output_subfolder, "frame_{0:06d}.fff".format(self.frame_count))
-                filename_tiff = os.path.join(output_subfolder, "frame_{0:06d}.tiff".format(self.frame_count))
-                filename_preview = os.path.join(output_subfolder, "frame_{:06d}.{}".format(self.frame_count, self.preview_format))
-                filename_meta = os.path.join(output_subfolder, "frame_{0:06d}.txt".format(self.frame_count))
-            
+                filename_fff = os.path.join(
+                    output_subfolder, "frame_{0:06d}.fff".format(self.frame_count)
+                )
+                filename_tiff = os.path.join(
+                    output_subfolder, "frame_{0:06d}.tiff".format(self.frame_count)
+                )
+                filename_preview = os.path.join(
+                    output_subfolder,
+                    "frame_{:06d}.{}".format(self.frame_count, self.preview_format),
+                )
+                filename_meta = os.path.join(
+                    output_subfolder, "frame_{0:06d}.txt".format(self.frame_count)
+                )
+
             if self.frame_count % self.step == 0:
 
                 if self.export_meta and self._check_overwrite(filename_fff):
                     frame.write(filename_fff)
-                
+
                 # Export raw files and/or radiometric convert them
                 if self.export_tiff and self._check_overwrite(filename_tiff):
                     if self.export_radiometric:
-                        
+
                         # Use Exiftool to extract metadata
                         if self.width is not None and self.height is not None:
                             # Export the first metadata
@@ -232,8 +270,8 @@ class Splitter:
                             meta = None
 
                         image = frame.get_radiometric_image(meta=meta)
-                        image += 273.15 # Convert to Kelvin
-                        image /= 0.04 # Standard FLIR scale factor
+                        image += 273.15  # Convert to Kelvin
+                        image /= 0.04  # Standard FLIR scale factor
                     else:
                         image = frame.get_image()
 
@@ -242,7 +280,7 @@ class Splitter:
                 # Export preview frame (crushed to 8-bit)
                 if self.export_preview and self._check_overwrite(filename_preview):
                     self._write_preview(filename_preview, image)
-        
+
             self.frame_count += 1
-                    
+
         return

@@ -1,16 +1,20 @@
-from flirpy.camera.boson import Boson
-from flirpy.camera.threadedboson import ThreadedBoson
-import flirpy.camera.boson
-import pytest
 import os
 import time
+
+import pytest
+
+import flirpy.camera.boson
+from flirpy.camera.boson import Boson
+from flirpy.camera.threadedboson import ThreadedBoson
 
 if Boson.find_video_device() is None:
     pytest.skip("Boson not connected, skipping tests", allow_module_level=True)
 
+
 def test_open_boson():
-   camera = ThreadedBoson()
-   camera.close()
+    camera = ThreadedBoson()
+    camera.close()
+
 
 def test_capture():
     camera = ThreadedBoson()
@@ -31,6 +35,7 @@ def test_capture():
         assert len(image.shape) == 2
     assert image.dtype == "uint16"
 
+
 def test_capture_compressed():
     camera = ThreadedBoson()
     camera.start()
@@ -41,4 +46,3 @@ def test_capture_compressed():
     camera.close()
 
     assert image is not None
-

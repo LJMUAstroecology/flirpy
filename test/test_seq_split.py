@@ -1,16 +1,20 @@
-import pkg_resources
 import os
 import subprocess
-
 import sys
-if sys.version.startswith('2'):
+
+import pkg_resources
+
+if sys.version.startswith("2"):
     from backports import tempfile
 else:
     import tempfile
+
 import glob
+
 import cv2
 
 from flirpy.io.seq import Splitter
+
 
 class TestSeqSplit:
     def setup_method(self):
@@ -37,20 +41,35 @@ class TestSeqSplit:
         assert os.path.exists(os.path.join(self.output_folder, "test", "preview"))
         assert os.path.exists(os.path.join(self.output_folder, "test", "radiometric"))
 
-        assert len(glob.glob(os.path.join(self.output_folder, "test", "raw", "*.fff"))) > 0
-        assert len(glob.glob(os.path.join(self.output_folder, "test", "raw", "*.txt"))) > 0
-        assert len(glob.glob(os.path.join(self.output_folder, "test", "preview", "*.jpg"))) > 0
-        assert len(glob.glob(os.path.join(self.output_folder, "test", "radiometric", "*.tiff"))) > 0
+        assert (
+            len(glob.glob(os.path.join(self.output_folder, "test", "raw", "*.fff"))) > 0
+        )
+        assert (
+            len(glob.glob(os.path.join(self.output_folder, "test", "raw", "*.txt"))) > 0
+        )
+        assert (
+            len(glob.glob(os.path.join(self.output_folder, "test", "preview", "*.jpg")))
+            > 0
+        )
+        assert (
+            len(
+                glob.glob(
+                    os.path.join(self.output_folder, "test", "radiometric", "*.tiff")
+                )
+            )
+            > 0
+        )
 
     def test_raw_is_16_bit(self):
         self.sp = Splitter(self.output_folder)
         self.sp.process(self.test_data_path)
 
-        raw_files = glob.glob(os.path.join(self.output_folder, "test", "radiometric", "*.tiff"))
+        raw_files = glob.glob(
+            os.path.join(self.output_folder, "test", "radiometric", "*.tiff")
+        )
 
         for raw_file in raw_files:
-            assert(cv2.imread(raw_file, cv2.IMREAD_UNCHANGED).dtype == "uint16")
-
+            assert cv2.imread(raw_file, cv2.IMREAD_UNCHANGED).dtype == "uint16"
 
     def test_process_no_mmap(self):
         self.sp = Splitter(self.output_folder)
@@ -69,9 +88,14 @@ class TestSeqSplit:
         self.sp.process(self.test_data_path)
 
         assert os.path.exists(os.path.join(self.output_folder, "test", "raw")) is False
-        assert os.path.exists(os.path.join(self.output_folder, "test", "preview")) is False
-        assert os.path.exists(os.path.join(self.output_folder, "test", "radiometric")) is False
-        
+        assert (
+            os.path.exists(os.path.join(self.output_folder, "test", "preview")) is False
+        )
+        assert (
+            os.path.exists(os.path.join(self.output_folder, "test", "radiometric"))
+            is False
+        )
+
         assert len(glob.glob(os.path.join(self.output_folder, "test", "*.fff"))) > 0
         assert len(glob.glob(os.path.join(self.output_folder, "test", "*.txt"))) > 0
         assert len(glob.glob(os.path.join(self.output_folder, "test", "*.jpg"))) > 0
