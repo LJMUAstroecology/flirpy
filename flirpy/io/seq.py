@@ -30,23 +30,12 @@ class Seq:
             self.seq_blob = seq_file.read()
 
         self._fff_it = self._get_fff_iterator(self.seq_blob)
-
-        self.pos = []
-        prev_pos = 0
-
-        # Iterate through sequence to get frame offsets
-        for match in self._fff_it:
-            index = match.start()
-            chunksize = index-prev_pos
-            self.pos.append((index, chunksize))
-            prev_pos = index
         
-        # Fix up the first chunk size
-        if len(self.pos) > 1:
-            self.pos[0] = (0, self.pos[1][1])
-        elif len(self.pos) == 1:
-            self.pos[0] = (0, len(self.seq_blob))
-
+        start_pos = [match.start() for match in self._fff_it]
+        fff_offset = start_pos[:-1]
+        fff_size = start_pos[1:] - start_pos[:-1]
+        self.pos = [(fff_offset[idx], fff_size[idx]) for idx in range(len(fff_offset))]
+       
         self.width = width
         self.height = height
 
