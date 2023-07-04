@@ -1,5 +1,7 @@
 import os
 
+import numpy as np
+
 from flirpy.io.fff import Fff
 from flirpy.util.exiftool import Exiftool
 
@@ -16,13 +18,15 @@ class TestFff:
     def test_read_image(self):
         image = self.frame.get_image()
         assert len(image.shape) == 2
+        assert image.dtype == np.uint16
 
     def test_read_radiometric_image(self):
         image = self.frame.get_radiometric_image()
         assert len(image.shape) == 2
+        assert image.dtype == np.float64
 
     def test_fff_gps(self):
-        coord = self.frame.get_gps()
+        coord = self.frame.meta["gps"]
         assert len(coord) == 9
 
     def test_from_bytes(self):
@@ -31,5 +35,4 @@ class TestFff:
             self.frame = Fff(infile.read())
 
             # Check GPS for sanity
-            coord = self.frame.get_gps()
-            assert len(coord) == 9
+            assert len(self.frame.meta["gps"]) == 9

@@ -4,19 +4,34 @@ import numpy as np
 
 
 def from_string_or_float(value):
+    """
+    Convert a string to a float, if it is a string. Otherwise, return the float.
+    """
     if type(value) is float:
         return value
     else:
         return float(value.strip().split(" ")[0])
 
 
-def raw2temp(raw, meta):
+def raw2temp(raw, meta) -> np.ndarray:
     """
     Convert raw pixel values to temperature, if calibration coefficients are known. The
     equations for atmospheric and window transmission are found in Minkina and Dudzik, as
     well as some of FLIR's documentation.
 
     Roughly ported from ThermImage: https://github.com/gtatters/Thermimage/blob/master/R/raw2temp.R
+
+    Parameters
+    ----------
+    raw : np.ndarray
+        Raw pixel values
+    meta : dict
+        Metadata dictionary
+
+    Returns
+    -------
+    np.ndarray
+        Temperature array in Celsius
 
     """
 
@@ -38,6 +53,10 @@ def raw2temp(raw, meta):
     RTemp = from_string_or_float(meta["Reflected Apparent Temperature"])
     humidity = from_string_or_float(meta["Relative Humidity"])
 
+    # Convert humidity to decimal
+    if humidity / 100 > 1:
+        humidity /= 100
+
     # Equations to convert to temperature
     # See http://130.15.24.88/exiftool/forum/index.php/topic,4898.60.html
     # Standard equation: temperature<-PB/log(PR1/(PR2*(raw+PO))+PF)-273.15
@@ -47,7 +66,7 @@ def raw2temp(raw, meta):
     window_reflectivity = 0
 
     # Converts relative humidity into water vapour pressure (mmHg)
-    water = (humidity / 100.0) * math.exp(
+    water = (humidity) * math.exp(
         1.5587
         + 0.06939 * (ATemp)
         - 0.00027816 * (ATemp) ** 2

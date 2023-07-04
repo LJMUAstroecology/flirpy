@@ -7,7 +7,7 @@ from glob import glob, iglob
 import numpy as nump
 import tqdm
 from PIL import Image
-from tqdm.autonotebook import tqdm
+from tqdm.auto import tqdm
 
 try:
     from pathlib import Path
@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 class Seq:
-    def __init__(self, input_file, height=None, width=None):
+    def __init__(self, input_file, height=None, width=None, raw=False):
         """
         Load a FLIR SEQ file. Currently this must be a SEQ
         file containing FFF files. The resulting object can
@@ -34,6 +34,7 @@ class Seq:
 
         self.pos = []
         prev_pos = 0
+        self.raw = raw
 
         # Iterate through sequence to get frame offsets
         for match in self._fff_it:
@@ -77,7 +78,10 @@ class Seq:
         offset, chunksize = self.pos[index]
         chunk = self.seq_blob[offset : offset + chunksize]
 
-        return Fff(chunk, self.width, self.height)
+        if self.raw:
+            return chunk
+        else:
+            return Fff(chunk)
 
 
 class Splitter:
@@ -203,11 +207,14 @@ class Splitter:
         exists = os.path.exists(path)
         return (not exists) or (exists and self.overwrite)
 
+    def _get_seq(self, input_file):
+        return Seq(input_file, self.height, self.width)
+
     def _process_seq(self, input_file, output_subfolder):
 
         logger.debug("Processing {}".format(input_file))
 
-        for count, frame in enumerate(tqdm(Seq(input_file, self.height, self.width))):
+        for count, frame in enumerate(tqdm(self._get_seq(input_file))):
 
             if frame.meta is None:
                 self.frame_count += 1
@@ -268,6 +275,103 @@ class Splitter:
                                 meta = self.exiftool.meta_from_file(filename_meta)
                         else:
                             meta = None
+
+                        image = frame.get_radiometric_image(meta=meta)
+                        image += 273.15  # Convert to Kelvin
+                        image /= 0.04  # Standard FLIR scale factor
+                    else:
+                        image = frame.get_image()
+
+                    self._write_tiff(filename_tiff, image)
+
+                # Export preview frame (crushed to 8-bit)
+                if self.export_preview and self._check_overwrite(filename_preview):
+                    self._write_preview(filename_preview, image)
+
+            self.frame_count += 1
+
+        return
+
+    def _write_frame(self, frame, filename):
+        logger.debug("Writing {}", filename)
+        frame.write(filename)
+
+
+class ExifToolSplitter(Splitter):
+    def _get_seq(self, input_file):
+        return Seq(input_file, self.height, self.width, raw=True)
+
+    def _write_frame(self, frame, filename):
+
+        # Write file
+        with open(filename, "wb") as f:
+            f.write(frame)
+
+        self.exiftool.write_meta(filename)
+
+    def _process_seq(self, input_file, output_subfolder):
+        logger.debug("Processing {}".format(input_file))
+
+        for count, frame in enumerate(tqdm(self._get_seq(input_file))):
+
+            if self.split_filetypes:
+                self._make_split_folders(output_subfolder)
+
+                filename_fff = os.path.join(
+                    output_subfolder,
+                    "raw",
+                    "frame_{0:06d}.fff".format(self.frame_count),
+                )
+                filename_tiff = os.path.join(
+                    output_subfolder,
+                    "radiometric",
+                    "frame_{0:06d}.tiff".format(self.frame_count),
+                )
+                filename_preview = os.path.join(
+                    output_subfolder,
+                    "preview",
+                    "frame_{:06d}.{}".format(self.frame_count, self.preview_format),
+                )
+                filename_meta = os.path.join(
+                    output_subfolder,
+                    "raw",
+                    "frame_{0:06d}.txt".format(self.frame_count),
+                )
+            else:
+                filename_fff = os.path.join(
+                    output_subfolder, "frame_{0:06d}.fff".format(self.frame_count)
+                )
+                filename_tiff = os.path.join(
+                    output_subfolder, "frame_{0:06d}.tiff".format(self.frame_count)
+                )
+                filename_preview = os.path.join(
+                    output_subfolder,
+                    "frame_{:06d}.{}".format(self.frame_count, self.preview_format),
+                )
+                filename_meta = os.path.join(
+                    output_subfolder, "frame_{0:06d}.txt".format(self.frame_count)
+                )
+
+            self._write_frame(frame, filename_fff)
+
+            if self.frame_count % self.step == 0:
+
+                self._write_frame(frame, filename_fff)
+                meta = self.exiftool.meta_from_file(filename_meta)
+
+                self.width = int(meta["Raw Thermal Image Width"])
+                self.height = int(meta["Raw Thermal Image Height"])
+
+                frame = Fff(
+                    filename_fff,
+                    width=self.width,
+                    height=self.height,
+                    use_exiftool=True,
+                )
+
+                # Export raw files and/or radiometric convert them
+                if self.export_tiff and self._check_overwrite(filename_tiff):
+                    if self.export_radiometric:
 
                         image = frame.get_radiometric_image(meta=meta)
                         image += 273.15  # Convert to Kelvin
