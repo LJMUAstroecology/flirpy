@@ -275,7 +275,7 @@ To run the test suite:
 
 ``` bash
 pip install pytest pytest-cov
-pytest --cov=flirpy test
+python -m pytest --cov=flirpy
 ```
 
 Some tests are hardware dependent, e.g. for cameras, so expect them to fail unless you own and have a camera to try them with. Hardware tests are skipped by default if the requisite camera is not plugged in.
