@@ -403,6 +403,10 @@ class Boson(Core):
             devices = pyudev.Enumerator(context)
 
             path = "/sys/class/video4linux/"
+            if not os.path.exists(path):
+                self.logger.warn("Video4Linux not found")
+                return res
+
             video_devices = [os.path.join(path, device) for device in os.listdir(path)]
             dev = []
             for device in video_devices:
