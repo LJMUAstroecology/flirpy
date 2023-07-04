@@ -23,3 +23,6 @@ flirpy/bin/** linguist-vendored
 # with the python modules ``pickle``, ``dbm.*``,
 # ``shelve``, ``marshal``, ``anydbm``, & ``bsddb``
 # (among others).
+
+linguist-vendored:
+    src/flirpy/bin/* linguist-vendored
