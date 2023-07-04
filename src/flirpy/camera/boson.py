@@ -10,6 +10,7 @@ import os
 import struct
 import sys
 import time
+import warnings
 
 import cv2
 from serial.tools import list_ports
@@ -404,7 +405,7 @@ class Boson(Core):
 
             path = "/sys/class/video4linux/"
             if not os.path.exists(path):
-                self.logger.warn("Video4Linux not found")
+                warnings.warn("Video4Linux not found")
                 return res
 
             video_devices = [os.path.join(path, device) for device in os.listdir(path)]
