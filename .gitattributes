@@ -1,5 +1,3 @@
-flirpy/bin/** linguist-vendored
-
 # Basic .gitattributes for a python repo.
 
 # Source files
@@ -24,5 +22,4 @@ flirpy/bin/** linguist-vendored
 # ``shelve``, ``marshal``, ``anydbm``, & ``bsddb``
 # (among others).
 
-linguist-vendored:
-    src/flirpy/bin/* linguist-vendored
+src/flirpy/bin/** linguist-vendored
