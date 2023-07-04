@@ -2,7 +2,6 @@ pyserial
 opencv-python-headless
 tqdm > 4.29
 numpy
-pytest
 pyudev
 psutil
 libusb
