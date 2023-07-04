@@ -125,21 +125,21 @@ class Tau:
         nuc_switch = status & (1 << 5)
         ffc = status & (1 << 6)
 
-        if overtemp is not 0:
+        if overtemp != 0:
             log.critical("Core overtemperature warning! Remove power immediately!")
 
-        if need_ffc is not 0:
+        if need_ffc != 0:
             log.warning("Core desires a new flat field correction (FFC).")
 
-        if gain_switch is not 0:
+        if gain_switch != 0:
             log.warning(
                 "Core suggests that the gain be switched (check for over/underexposure)."
             )
 
-        if nuc_switch is not 0:
+        if nuc_switch != 0:
             log.warning("Core suggests that the NUC be switched.")
 
-        if ffc is not 0:
+        if ffc != 0:
             log.info("FFC is in progress.")
 
     def get_acceleration(self):
