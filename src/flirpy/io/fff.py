@@ -300,4 +300,4 @@ class Fff:
             meta["Timestamp"]
         ).strftime("%Y-%m-%d %H:%M:%S")
 
-        self.meta |= meta
+        self.meta.update(meta)
