@@ -993,6 +993,30 @@ class Boson(Core):
 
         return res
 
+    def set_external_sync_mode(self, sync_mode):
+        """
+        Set the external sync mode
+
+        FLR_BOSON_EXT_SYNC_DISABLE_MODE = 0
+        FLR_BOSON_EXT_SYNC_MASTER_MODE = 1
+        FLR_BOSON_EXT_SYNC_SLAVE_MODE = 2
+        FLR_BOSON_EXT_SYNC_END = 3
+        """
+        function_id = 0x50098
+        command = struct.pack(">I", sync_mode)
+        self._send_packet(function_id, data=command)
+
+    def get_external_sync_mode(self):
+        function_id = 0x50099
+
+        res = self._send_packet(function_id)
+        res = self._decode_packet(res, receive_size=4)
+
+        if res is not None and len(res) == 4:
+            res = struct.unpack(">I", res)[0]
+
+        return res
+
     def _decode_packet(self, data, receive_size=0):
         """
         Decodes a data packet from the camera.

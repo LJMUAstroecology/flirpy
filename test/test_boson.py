@@ -111,3 +111,9 @@ def test_ffc_mode_auto():
         camera.set_ffc_auto()
         mode = camera.get_ffc_mode()
         assert mode == flirpy.camera.boson.FLR_BOSON_AUTO_FFC
+
+
+def test_get_external_sync_mode():
+    with Boson() as camera:
+        ext_sync_mode = camera.get_external_sync_mode()
+        assert ext_sync_mode in [0, 1, 2, 3]
