@@ -1,6 +1,6 @@
 ---
-name: Bug report or other issue (feature requests, help, etc).
-about: Create a report to help us improve
+name: Bug report
+about: Report issues in Flirpy where things don't work as intended
 title: ''
 labels: bug
 assignees: ''
