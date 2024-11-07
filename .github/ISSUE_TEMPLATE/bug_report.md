@@ -1,5 +1,5 @@
 ---
-name: Bug report
+name: Bug report or other issue (feature requests, help, etc).
 about: Create a report to help us improve
 title: ''
 labels: bug
@@ -11,6 +11,9 @@ assignees: ''
 
 **Version**
 What version of flirpy are you using?
+
+**Camera and interface**
+What model of camera are you using, exactly, and how is it connected? For example "FLIR Boson, non-radiometric via USB-C interface"
 
 **Describe the bug**
 A clear and concise description of what the bug is.
