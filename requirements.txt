@@ -1,5 +1,5 @@
 pyserial
-opencv-python-headless
+opencv-python-headless <= 4.9
 tqdm > 4.29
 numpy
 pyudev
