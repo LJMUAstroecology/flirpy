@@ -87,7 +87,10 @@ if __name__ == "__main__":
         numeric_level = getattr(logging, args.verbosity.upper(), None)
         if not isinstance(numeric_level, int):
             raise ValueError('Invalid log level: %s' % args.verbosity)
-        logging.basicConfig(level=numeric_level)
+        if logger.handlers():
+            logger.setLevel(loglevel)
+        else:
+            logging.basicConfig(level=loglevel)
     
     output_folder = os.path.abspath(args.output)
     input_mask = args.input
