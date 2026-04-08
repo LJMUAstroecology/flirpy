@@ -1,6 +1,5 @@
 import logging
 import os
-import struct
 
 from PIL import Image
 from tqdm.auto import tqdm
@@ -10,7 +9,13 @@ try:
 except ImportError:
     from pathlib2 import Path  # python 2 backport
 
-from flirpy.io.fff import Fff
+from flirpy.io.fff import (
+    _FFF_HEADER_STRUCT,
+    _FFF_RECORD_STRUCT,
+    Fff,
+    FffHeader,
+    FffRecord,
+)
 from flirpy.util.exiftool import Exiftool
 
 logger = logging.getLogger(__name__)
@@ -42,34 +47,32 @@ class Seq:
         Returns a list of (offset, size) tuples.
         """
         FFF_MAGIC = b"FFF\x00"
-        # FFF header: 4s magic, 16s creator, I version, I record_dir_offset,
-        #             I record_count, I ?, H ?, 7H ?
-        header_struct = struct.Struct("<4s16sIIIIH7H")
-        # Each record entry: HH IIIIIII (32 bytes)
-        record_struct = struct.Struct("<HHIIIIIII")
 
         pos = []
         cursor = 0
         blob_len = len(seq_blob)
 
-        while cursor + header_struct.size <= blob_len:
+        while cursor + _FFF_HEADER_STRUCT.size <= blob_len:
             if seq_blob[cursor : cursor + 4] != FFF_MAGIC:
                 break
 
-            res = header_struct.unpack_from(seq_blob, cursor)
-            record_dir_offset = res[3]
-            record_count = res[4]
+            bigendian = FffHeader.detect_bigendian(seq_blob, cursor)
+            header = FffHeader.from_buffer(seq_blob, cursor, bigendian=bigendian)
 
             # Frame extent is at least the end of the record directory
-            frame_size = record_dir_offset + record_count * record_struct.size
+            frame_size = (
+                header.record_dir_offset + header.record_count * _FFF_RECORD_STRUCT.size
+            )
 
             # Extend to cover every record's data region
-            for i in range(record_count):
-                rec_abs = cursor + record_dir_offset + i * record_struct.size
-                if rec_abs + record_struct.size > blob_len:
+            for i in range(header.record_count):
+                rec_abs = (
+                    cursor + header.record_dir_offset + i * _FFF_RECORD_STRUCT.size
+                )
+                if rec_abs + _FFF_RECORD_STRUCT.size > blob_len:
                     break
-                r = record_struct.unpack_from(seq_blob, rec_abs)
-                rec_end = r[4] + r[5]  # record_offset + record_length
+                rec = FffRecord.from_buffer(seq_blob, rec_abs, bigendian)
+                rec_end = rec.record_offset + rec.record_length
                 frame_size = max(frame_size, rec_end)
 
             pos.append((cursor, frame_size))

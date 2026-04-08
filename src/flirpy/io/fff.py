@@ -13,6 +13,70 @@ from flirpy.util.raw import raw2temp
 logger = logging.getLogger()
 
 
+# Full FFF file header: 64 bytes (0x40)
+_FFF_HEADER_STRUCT = struct.Struct("<4s16sIIIIH7HIII")
+_FFF_RECORD_STRUCT = struct.Struct("<HHIIIIIII")
+
+
+@dataclass
+class FffHeader:
+    """Dataclass for the FFF file header (0x40 = 64 bytes).
+
+    Field layout from ExifTool FLIR.pm (ProcessFLIR):
+
+    # 0x00 - char[4]    file format magic ("FFF\x00")
+    # 0x04 - char[16]   file creator: e.g. "CAMCTRL", "FLIR", "ResearchIR"
+    # 0x14 - uint32     file format version (seen 100, 101)
+    # 0x18 - uint32     record directory offset (bytes from start of file)
+    # 0x1C - uint32     number of entries in record directory
+    # 0x20 - uint32     next free index ID = 2
+    # 0x24 - uint16     swap pattern = 0 (?)
+    # 0x26 - uint16[7]  spares
+    # 0x34 - uint32[2]  reserved
+    # 0x3C - uint32     checksum
+    """
+
+    magic: bytes
+    creator: bytes
+    format_version: int
+    record_dir_offset: int
+    record_count: int
+    next_free_index: int
+    swap_pattern: int
+    spares: tuple
+    reserved: tuple
+    checksum: int
+
+    @staticmethod
+    def detect_bigendian(data, offset=0):
+        """Detect endianness by checking if the version field (0x14) is valid
+        when read as little-endian.  Valid versions are in the range [100, 200)."""
+        return int.from_bytes(data[offset + 0x14 : offset + 0x14 + 4], "little") > 200
+
+    @classmethod
+    def from_buffer(cls, data, offset=0, bigendian=None):
+        if bigendian is None:
+            bigendian = cls.detect_bigendian(data, offset)
+        s = (
+            get_struct("4s16sIIIIH7HIII", bigendian)
+            if bigendian
+            else _FFF_HEADER_STRUCT
+        )
+        res = s.unpack_from(data, offset)
+        return cls(
+            magic=res[0],
+            creator=res[1],
+            format_version=res[2],
+            record_dir_offset=res[3],
+            record_count=res[4],
+            next_free_index=res[5],
+            swap_pattern=res[6],
+            spares=res[7:14],
+            reserved=(res[14], res[15]),
+            checksum=res[16],
+        )
+
+
 @dataclass
 class FffRecord:
     """
@@ -46,28 +110,40 @@ class FffRecord:
     object_number: int = MISSING
     checksum: int = 0
 
-    def __init__(self, data: bytes, bigendian: bool = False):
-        """Generate a FffRecord object from a bytes object
+    @classmethod
+    def from_buffer(cls, data, offset=0, bigendian=None):
+        if bigendian is None:
+            bigendian = FffHeader.detect_bigendian(data, offset)
+        s = get_struct("HHIIIIIII", bigendian) if bigendian else _FFF_RECORD_STRUCT
+        res = s.unpack_from(data, offset)
+        return cls(
+            record_type=res[0],
+            record_subtype=res[1],
+            record_version=res[2],
+            index_id=res[3],
+            record_offset=res[4],
+            record_length=res[5],
+            parent=res[6],
+            object_number=res[7],
+            checksum=res[8],
+        )
+
+    def __init__(self, data=None, bigendian=False, **kwargs):
+        """Generate a FffRecord from a bytes object or keyword arguments.
 
         Parameters
         ----------
-        data : bytes
-            Data array
+        data : bytes, optional
+            Raw bytes to unpack. If None, fields are taken from kwargs.
         bigendian : bool, optional
             Whether to assume big endian, by default False
         """
-        s = get_struct("HHIIIIIII", bigendian)
-        res = s.unpack_from(data)
-
-        self.record_type = res[0]
-        self.record_subtype = res[1]
-        self.record_version = res[2]
-        self.index_id = res[3]
-        self.record_offset = res[4]
-        self.record_length = res[5]
-        self.parent = res[6]
-        self.object_number = res[7]
-        self.checksum = res[8]
+        if data is not None:
+            r = self.from_buffer(data, bigendian=bigendian)
+            self.__dict__.update(r.__dict__)
+        else:
+            for k, v in kwargs.items():
+                setattr(self, k, v)
 
 
 def get_struct(s: str, bigendian=False) -> struct.Struct:
@@ -172,31 +248,19 @@ class Fff:
                     )
 
     def _get_records(self):
-        bigendian = False
-        if int.from_bytes(self.data[0x14 : 0x14 + 4], "little") > 200:
-            bigendian = True
+        bigendian = FffHeader.detect_bigendian(self.data)
+        if bigendian:
             logger.debug("Assuming file is bigendian")
 
-        s = get_struct("4s16sIIIIH7H", bigendian)
-        res = s.unpack_from(self.data, 0)
+        header = FffHeader.from_buffer(self.data, bigendian=bigendian)
 
-        file_format = res[0].decode()
-        file_creator = res[1].decode()
-        file_format_version = res[2]
+        logger.debug("File format: %s", header.magic.decode())
+        logger.debug("File creator: %s", header.creator.decode())
+        logger.debug("File format version: %d", header.format_version)
 
-        logger.debug("File format: %s", file_format)
-        logger.debug("File creator: %s", file_creator)
-        logger.debug("File format version: %d", file_format_version)
-
-        record_offset = res[3]
-        record_number = res[4]
-
-        for i in range(record_number):
-            s = get_struct("HHIIIIIII", bigendian)
-            offset = record_offset + i * s.size
-            self.records.append(
-                FffRecord(self.data[offset : offset + s.size], bigendian)
-            )
+        for i in range(header.record_count):
+            offset = header.record_dir_offset + i * _FFF_RECORD_STRUCT.size
+            self.records.append(FffRecord.from_buffer(self.data, offset, bigendian))
 
     def write(self, path):
         with open(path, "wb") as fff_file:
