@@ -1,6 +1,3 @@
-import binascii
-import time
-
 import serial
 
 

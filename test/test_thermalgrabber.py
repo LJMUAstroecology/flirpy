@@ -34,6 +34,8 @@ def test_grab():
 def test_grab_raw():
     with TeaxGrabber() as camera:
         image = camera.grab(radiometric=False)
+        assert image is not None
+        assert image.dtype == np.uint16
 
 
 def test_image_and_uart():

@@ -1,9 +1,9 @@
+import datetime
 import logging
 import os
-import re
 import struct
-import tempfile
 from dataclasses import MISSING, dataclass
+from typing import Union
 
 import numpy as np
 
@@ -15,7 +15,16 @@ logger = logging.getLogger()
 
 @dataclass
 class FffRecord:
-    # From Exiftool documentation
+    """
+    Dataclass for FFF records. FFF records are 32 bytes long and contain the following information.
+
+    Endianness must be provided, because it is inferred from the main FFF header and cannot necessarily
+    be determened from this record alone (though in principle if you get a record type that is obviously
+    incorrect, check it).
+
+    The record offset here is with respect to the start of the FFF file that this record was extracted from.
+
+    # From Exiftool documentation:
     # 0x00 - int16u record type
     # 0x02 - int16u record subtype: RawData 1=BE, 2=LE, 3=PNG; 1 for other record types
     # 0x04 - int32u record version: seen 0x64,0x66,0x67,0x68,0x6f,0x104
@@ -25,6 +34,7 @@ class FffRecord:
     # 0x14 - int32u parent = 0 (?)
     # 0x18 - int32u object number = 0 (?)
     # 0x1c - int32u checksum: 0 for no checksum
+    """
 
     record_type: int = MISSING
     record_subtype: int = MISSING
@@ -84,7 +94,26 @@ def get_struct(s: str, bigendian=False) -> struct.Struct:
 
 
 class Fff:
-    def __init__(self, data, use_exiftool=False):
+    def __init__(self, data: Union[str, bytes], use_exiftool: bool = False):
+        """
+        Create a FFF object from a filename or a bytes object.
+
+        By default we attempt to decode the records in the file, but if there are
+        additional records that we don't know about, these will not be extracted. In
+        this case you can use Exiftool to attempt to dump these.
+
+        Parameters
+        ----------
+        data : Union[str, bytes]
+            Either a filename or the raw bytes of a FFF file
+        use_exiftool : bool, optional
+            Use Exiftool to extract metadata, by default False.
+
+        Raises
+        ------
+        TypeError
+            If data is not a string or bytes object
+        """
 
         self.image = None
         self.filename = None
@@ -117,7 +146,6 @@ class Fff:
             self._get_records()
 
             for record in self.records:
-
                 record_data = self.data[
                     record.record_offset : record.record_offset + record.record_length
                 ]
@@ -213,7 +241,8 @@ class Fff:
         if int.from_bytes(data[:2], "little") != 0x002:
             bigendian = True
 
-        get_uint16 = lambda x: get_struct("H", bigendian).unpack_from(data, x)[0]
+        def get_uint16(x):
+            return get_struct("H", bigendian).unpack_from(data, x)[0]
 
         self.width = get_uint16(0x02)
         self.height = get_uint16(0x04)
@@ -228,14 +257,23 @@ class Fff:
         if int.from_bytes(data[:2], "little") != 0x002:
             bigendian = True
 
-        get_float = lambda x: get_struct("f", bigendian).unpack_from(data, x)[0]
-        get_float_kelvin = (
-            lambda x: get_struct("f", bigendian).unpack_from(data, x)[0] - 273.14
-        )
-        get_uint16 = lambda x: get_struct("H", bigendian).unpack_from(data, x)[0]
-        get_uint32 = lambda x: get_struct("L", bigendian).unpack_from(data, x)[0]
-        get_int32 = lambda x: get_struct("i", bigendian).unpack_from(data, x)[0]
-        get_string = lambda x, l: get_struct(f"{l}s", bigendian).unpack_from(data, x)[0]
+        def get_float(x):
+            return get_struct("f", bigendian).unpack_from(data, x)[0]
+
+        def get_float_kelvin(x):
+            return get_struct("f", bigendian).unpack_from(data, x)[0] - 273.14
+
+        def get_uint16(x):
+            return get_struct("H", bigendian).unpack_from(data, x)[0]
+
+        def get_uint32(x):
+            return get_struct("L", bigendian).unpack_from(data, x)[0]
+
+        def get_int32(x):
+            return get_struct("i", bigendian).unpack_from(data, x)[0]
+
+        def get_string(x, n):
+            return get_struct(f"{n}s", bigendian).unpack_from(data, x)[0]
 
         meta = {}
         meta["Width"] = get_uint16(0x02)
@@ -294,8 +332,6 @@ class Fff:
         meta["FocusDistance"] = get_float(0x45C)
         meta["FrameRate"] = get_uint16(0x464)
         meta["Timestamp"] = get_uint32(0x384)
-        import datetime
-
         meta["Datetime (UTC)"] = datetime.datetime.fromtimestamp(
             meta["Timestamp"]
         ).strftime("%Y-%m-%d %H:%M:%S")

@@ -1,5 +1,4 @@
 import logging
-import time
 import warnings
 
 import cv2

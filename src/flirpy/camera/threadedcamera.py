@@ -84,7 +84,6 @@ class ThreadedCamera(object):
             self.new_frame_thresh = 1.0 / self.target_fps
 
         while True:
-
             # Track frame start time
             self.frame_time = time.time()
 

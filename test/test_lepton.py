@@ -44,6 +44,7 @@ def test_capture_speed():
         tstart = time.time()
         for _ in range(20):
             image = camera.grab()
+            assert image is not None
         tend = time.time()
 
         assert tend - tstart < 2.5

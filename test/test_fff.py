@@ -3,7 +3,6 @@ import os
 import numpy as np
 
 from flirpy.io.fff import Fff
-from flirpy.util.exiftool import Exiftool
 
 
 class TestFff:

@@ -1,7 +1,6 @@
 import glob
 import logging
 import os
-import pathlib
 import shutil
 import subprocess
 import tempfile
@@ -123,7 +122,7 @@ class splitter:
                             prev_size = size
 
                             pbar.update(delta)
-                        except:
+                        except Exception:
                             pass
                         continue
                 except KeyboardInterrupt:
@@ -181,7 +180,7 @@ class splitter:
 
         try:
             total_size = sum([os.path.getsize(f) for f in input_files])
-        except:
+        except Exception:
             logger.warn("Failed to get size: {}".format(input_files))
             total_size = 0
 
@@ -235,7 +234,6 @@ class splitter:
 
         # Convert raw files
         for raw in glob.glob(os.path.join(folder, "*.tiff")):
-
             base, ext = os.path.splitext(os.path.basename(raw))
             output_name = base + ".png"
 
@@ -296,7 +294,7 @@ def find_files(path, heuristics=True):
 
 def process_file(input_file):
 
-    logger.info("Working on:", input_file)
+    logger.info("Working on: %s", input_file)
 
     input_folder, full_filename = os.path.split(input_file)
     filename, _ = full_filename.split(".")
@@ -308,7 +306,7 @@ def process_file(input_file):
     output_folder = input_folder + os.sep + filename
     logger.info(output_folder)
 
-    split_file(
+    split_file(  # noqa: F821
         working_folder + os.sep + full_filename, input_folder + os.sep + filename
     )
 
@@ -337,9 +335,9 @@ def process_directory(input_folder):
     )
     os.makedirs(working_folder, exist_ok=True)
 
-    merged = merge_folder(input_folder, working_folder)
+    merged = merge_folder(input_folder, working_folder)  # noqa: F821
 
-    split_file(merged, input_folder + os.sep + "frames")
+    split_file(merged, input_folder + os.sep + "frames")  # noqa: F821
 
     shutil.rmtree(working_folder)
     print("Finished {}".format(input_folder))

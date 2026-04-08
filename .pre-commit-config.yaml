@@ -1,10 +1,13 @@
 repos:
 
-  - repo: https://github.com/psf/black
-    rev: 22.10.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    # Ruff version.
+    rev: v0.15.9
     hooks:
-      - id: black
-        language_version: python3.10
+      # Run the linter.
+      - id: ruff-check
+      # Run the formatter.
+      - id: ruff-format
 
   - repo: https://github.com/srstevenson/nb-clean
     rev: "2.4.0"
@@ -12,10 +15,3 @@ repos:
       - id: nb-clean
         args:
             - --remove-empty-cells
-
-  - repo: https://github.com/pycqa/isort
-    rev: 5.10.1
-    hooks:
-      - id: isort
-        name: isort (python)
-        args: ["--profile", "black"]

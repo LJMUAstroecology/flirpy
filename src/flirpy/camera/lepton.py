@@ -4,9 +4,9 @@ import struct
 import subprocess
 import sys
 import warnings
+from importlib.resources import files
 
 import cv2
-import pkg_resources
 
 from flirpy.camera.core import Core
 
@@ -33,9 +33,7 @@ class Lepton(Core):
         res = None
 
         if sys.platform.startswith("win32"):
-            device_check_path = pkg_resources.resource_filename(
-                "flirpy", "bin/find_cameras.exe"
-            )
+            device_check_path = str(files("flirpy").joinpath("bin/find_cameras.exe"))
             device_id = int(
                 subprocess.check_output([device_check_path, "PureThermal"]).decode()
             )
@@ -60,7 +58,7 @@ class Lepton(Core):
                     return device_id
 
         else:
-            import pyudev
+            import pyudev  # noqa: PLC0415
 
             context = pyudev.Context()
             devices = pyudev.Enumerator(context)
@@ -90,7 +88,7 @@ class Lepton(Core):
                     data = cam.read()
                     cam.release()
 
-                    if data[0] == True and data[1] is not None:
+                    if data[0] and data[1] is not None:
                         res = d
                         break
             elif len(dev) == 1:

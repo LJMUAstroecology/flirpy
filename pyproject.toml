@@ -5,6 +5,7 @@ version = "0.4.0"
 authors = [
     { name = "Josh Veitch-Michaelis", email = "jveitchmichaelis@gmail.com" }
 ]
+requires-python = ">=3.10"
 
 [project.optional-dependencies]
 test = [
@@ -12,18 +13,23 @@ test = [
     "pytest-cov",
     "coverage-badge"
 ]
+dev = [
+    "ruff"
+]
 
-[tool.black]
-line-length = 88
+[tool.ruff]
+exclude = ["Untitled.ipynb"]
+src = ["src"]
 
-[tool.isort]
-profile = "black"
-
-[tool.pylint.MASTER]
-py-version = "3.10"
-jobs = 2
-load-plugins = ["pylint.extensions.docparams", "pylint.extensions.typing"]
-disable = ["line-too-long"]
+[tool.ruff.lint]
+select = ["E", "F", "I", "PL"]
+ignore = [
+    "E501",    # line too long (covered by formatter)
+    "PLR2004", # magic value comparisons (noisy for protocol/hardware code)
+    "PLR0912", # too many branches
+    "PLR0913", # too many arguments
+    "PLR0915", # too many statements
+]
 
 [tool.pytest.ini_options]
 addopts = [
