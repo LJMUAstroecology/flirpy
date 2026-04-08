@@ -1,6 +1,6 @@
 import logging
 import os
-import re
+import struct
 
 from PIL import Image
 from tqdm.auto import tqdm
@@ -26,35 +26,56 @@ class Seq:
         with open(input_file, "rb") as seq_file:
             self.seq_blob = seq_file.read()
 
-        self._fff_it = self._get_fff_iterator(self.seq_blob)
-
         self.raw = raw
-
-        # Collect all frame start positions, then compute each frame's size as
-        # the distance to the next frame (or end of file for the last frame).
-        positions = [match.start() for match in self._fff_it]
-        self.pos = []
-        for i, index in enumerate(positions):
-            if i + 1 < len(positions):
-                chunksize = positions[i + 1] - index
-            else:
-                chunksize = len(self.seq_blob) - index
-            self.pos.append((index, chunksize))
+        self.pos = self._get_frame_positions(self.seq_blob)
 
         self.width = width
         self.height = height
 
-    def _get_fff_iterator(self, seq_blob):
+    @staticmethod
+    def _get_frame_positions(seq_blob):
         """
-        Internal function which returns an iterator containing the
-        indices of the files in the SEQ. Probably this should be
-        converted to something a bit more intelligent which
-        actually identifies the size of the records in the file.
-        """
-        magic_pattern_fff = "\x46\x46\x46\x00".encode()
+        Walk the SEQ blob by parsing each FFF header to determine the
+        frame extent from its record directory. FFF entries start with a
+        magic byte sequence, but this can also appear inside image data.
 
-        valid = re.compile(magic_pattern_fff)
-        return valid.finditer(seq_blob)
+        Returns a list of (offset, size) tuples.
+        """
+        FFF_MAGIC = b"FFF\x00"
+        # FFF header: 4s magic, 16s creator, I version, I record_dir_offset,
+        #             I record_count, I ?, H ?, 7H ?
+        header_struct = struct.Struct("<4s16sIIIIH7H")
+        # Each record entry: HH IIIIIII (32 bytes)
+        record_struct = struct.Struct("<HHIIIIIII")
+
+        pos = []
+        cursor = 0
+        blob_len = len(seq_blob)
+
+        while cursor + header_struct.size <= blob_len:
+            if seq_blob[cursor : cursor + 4] != FFF_MAGIC:
+                break
+
+            res = header_struct.unpack_from(seq_blob, cursor)
+            record_dir_offset = res[3]
+            record_count = res[4]
+
+            # Frame extent is at least the end of the record directory
+            frame_size = record_dir_offset + record_count * record_struct.size
+
+            # Extend to cover every record's data region
+            for i in range(record_count):
+                rec_abs = cursor + record_dir_offset + i * record_struct.size
+                if rec_abs + record_struct.size > blob_len:
+                    break
+                r = record_struct.unpack_from(seq_blob, rec_abs)
+                rec_end = r[4] + r[5]  # record_offset + record_length
+                frame_size = max(frame_size, rec_end)
+
+            pos.append((cursor, frame_size))
+            cursor += frame_size
+
+        return pos
 
     def __len__(self):
         """
