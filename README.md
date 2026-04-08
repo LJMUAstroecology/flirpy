@@ -4,7 +4,7 @@
 
 [![DOI](https://zenodo.org/badge/146534780.svg)](https://zenodo.org/badge/latestdoi/146534780)
 
-[![Tests](https://github.com/LJMUAstroecology/flirpy/actions/workflows/python.yml/badge.svg)](https://github.com/LJMUAstroecology/flirpy/actions/workflows/python-package.yaml/badge.svg)
+[![Tests](https://github.com/LJMUAstroecology/flirpy/actions/workflows/python-package.yaml/badge.svg)](https://github.com/LJMUAstroecology/flirpy/actions/workflows/python-package.yaml)
 
 ## Introduction
 
