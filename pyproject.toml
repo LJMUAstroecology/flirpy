@@ -13,11 +13,12 @@ requires-python = ">=3.10"
 dependencies = [
     "numpy",
     "natsort",
-    "Pillow",
+    "pillow",
     "psutil",
     "pyftdi",
     "pyserial",
     "pyusb",
+    "libusb",
     "tqdm>4.29",
     "opencv-python-headless<=4.9",
     "pyudev; sys_platform == 'linux'",
