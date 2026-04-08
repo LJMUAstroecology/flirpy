@@ -81,12 +81,15 @@ def _parse_exiftool_records(output):
 
 
 def _run_exiftool(path):
-    result = subprocess.run(
-        ["exiftool", "-v3", path],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    try:
+        result = subprocess.run(
+            ["exiftool", "-v3", path],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+    except FileNotFoundError:
+        pytest.skip("exiftool not available")
     if result.returncode != 0:
         pytest.skip("exiftool not available")
     return result.stdout
