@@ -146,7 +146,7 @@ class Splitter:
             self._process_seq(seq, folder)
 
             # Batch export meta data
-            if self.export_meta:
+            if self.export_meta and self.exiftool.path is not None:
                 logger.info("Extracting metadata")
 
                 if self.split_filetypes:
@@ -163,7 +163,7 @@ class Splitter:
                 self.exiftool.write_meta(filemask)
 
             # Copy geotags
-            if self.export_tiff:
+            if self.export_tiff and self.exiftool.path is not None:
                 logger.info("Copying tags to radiometric")
                 self.exiftool.copy_meta(
                     folder,
@@ -172,7 +172,7 @@ class Splitter:
                     ext="tiff",
                 )
 
-            if self.export_preview:
+            if self.export_preview and self.exiftool.path is not None:
                 logger.info("Copying tags to preview")
                 self.exiftool.copy_meta(
                     folder,
@@ -260,7 +260,11 @@ class Splitter:
                 if self.export_tiff and self._check_overwrite(filename_tiff):
                     if self.export_radiometric:
                         # Use Exiftool to extract metadata
-                        if self.width is not None and self.height is not None:
+                        if (
+                            self.width is not None
+                            and self.height is not None
+                            and self.exiftool.path is not None
+                        ):
                             # Export the first metadata
                             if count == 0:
                                 self.exiftool.write_meta(filename_fff)
@@ -297,7 +301,8 @@ class ExifToolSplitter(Splitter):
         with open(filename, "wb") as f:
             f.write(frame)
 
-        self.exiftool.write_meta(filename)
+        if self.exiftool.path is not None:
+            self.exiftool.write_meta(filename)
 
     def _process_seq(self, input_file, output_subfolder):
         logger.debug("Processing {}".format(input_file))
