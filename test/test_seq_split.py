@@ -9,8 +9,10 @@ else:
 import glob
 
 import cv2
+import pytest
 
 from flirpy.io.seq import Splitter
+from flirpy.util.exiftool import Exiftool
 
 
 class TestSeqSplit:
@@ -29,6 +31,8 @@ class TestSeqSplit:
         assert os.path.exists(self.output_folder)
 
     def test_process_seq_split(self):
+        if Exiftool().path is None:
+            pytest.skip("Exiftool not installed")
         self.sp = Splitter(self.output_folder)
 
         self.sp.split_folders = True

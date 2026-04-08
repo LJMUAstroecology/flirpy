@@ -14,14 +14,24 @@ class Exiftool:
         if path is None:
             if sys.platform.startswith("win32"):
                 self.path = str(files("flirpy").joinpath("bin/exiftool.exe"))
-            # Fix problems on ARM platforms
-            elif platform.uname()[4].startswith("arm"):
-                if os.path.isfile("/usr/bin/exiftool"):
-                    self.path = "/usr/bin/exiftool"
-                else:
-                    logger.warning("Exiftool not installed, try: apt install exiftool")
-            else:
+            elif sys.platform.startswith("linux") and not platform.uname()[
+                4
+            ].startswith("arm"):
                 self.path = str(files("flirpy").joinpath("bin/exiftool"))
+            else:
+                # macOS or Linux ARM: use system exiftool
+                system_path = "/usr/bin/exiftool"
+                brew_path = "/usr/local/bin/exiftool"
+                homebrew_path = "/opt/homebrew/bin/exiftool"
+                for candidate in (system_path, brew_path, homebrew_path):
+                    if os.path.isfile(candidate):
+                        self.path = candidate
+                        break
+                else:
+                    logger.warning(
+                        "Exiftool not installed, try: brew install exiftool or apt install exiftool"
+                    )
+                    self.path = None
 
         else:
             self.path = path

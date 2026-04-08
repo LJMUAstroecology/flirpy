@@ -146,7 +146,7 @@ class Splitter:
             self._process_seq(seq, folder)
 
             # Batch export meta data
-            if self.export_meta:
+            if self.export_meta and self.exiftool.path is not None:
                 logger.info("Extracting metadata")
 
                 if self.split_filetypes:
@@ -163,7 +163,7 @@ class Splitter:
                 self.exiftool.write_meta(filemask)
 
             # Copy geotags
-            if self.export_tiff:
+            if self.export_tiff and self.exiftool.path is not None:
                 logger.info("Copying tags to radiometric")
                 self.exiftool.copy_meta(
                     folder,
@@ -172,7 +172,7 @@ class Splitter:
                     ext="tiff",
                 )
 
-            if self.export_preview:
+            if self.export_preview and self.exiftool.path is not None:
                 logger.info("Copying tags to preview")
                 self.exiftool.copy_meta(
                     folder,

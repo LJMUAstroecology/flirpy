@@ -43,7 +43,7 @@ class splitter:
     def __init__(
         self,
         output_folder="./",
-        thermoviewer_path="C:\Program Files (x86)\ThermoViewer\ThermoViewer.exe",
+        thermoviewer_path=r"C:\Program Files (x86)\ThermoViewer\ThermoViewer.exe",
     ):
         self.thermoviewer_path = thermoviewer_path
 
