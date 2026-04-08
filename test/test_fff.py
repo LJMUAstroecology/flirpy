@@ -41,9 +41,13 @@ class TestFff:
 
 
 def _parse_exiftool_endian(output):
-    """Parse endianness from exiftool -v3 output."""
+    """Parse endianness from exiftool -v3 output.
+
+    Returns None if the exiftool version is too old to report endianness
+    """
     m = re.search(r"BinaryData directory, (\d+) bytes, (\w+)-endian", output)
-    assert m
+    if m is None:
+        return None
     return m.group(2) == "Big"
 
 
@@ -96,7 +100,9 @@ def _check_header_vs_exiftool(path):
         data = f.read()
 
     bigendian = FffHeader.detect_bigendian(data)
-    assert bigendian == _parse_exiftool_endian(output), "endian mismatch"
+    et_endian = _parse_exiftool_endian(output)
+    if et_endian is not None:
+        assert bigendian == et_endian, "endian mismatch"
 
     header = FffHeader.from_buffer(data, bigendian=bigendian)
     assert header.record_count == _parse_exiftool_record_count(output), (
