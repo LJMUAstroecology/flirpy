@@ -260,7 +260,11 @@ class Splitter:
                 if self.export_tiff and self._check_overwrite(filename_tiff):
                     if self.export_radiometric:
                         # Use Exiftool to extract metadata
-                        if self.width is not None and self.height is not None:
+                        if (
+                            self.width is not None
+                            and self.height is not None
+                            and self.exiftool.path is not None
+                        ):
                             # Export the first metadata
                             if count == 0:
                                 self.exiftool.write_meta(filename_fff)
@@ -297,7 +301,8 @@ class ExifToolSplitter(Splitter):
         with open(filename, "wb") as f:
             f.write(frame)
 
-        self.exiftool.write_meta(filename)
+        if self.exiftool.path is not None:
+            self.exiftool.write_meta(filename)
 
     def _process_seq(self, input_file, output_subfolder):
         logger.debug("Processing {}".format(input_file))
