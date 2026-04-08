@@ -11,8 +11,54 @@ import glob
 import cv2
 import pytest
 
-from flirpy.io.seq import Splitter
+from flirpy.io.seq import Seq, Splitter
 from flirpy.util.exiftool import Exiftool
+
+FFF_MAGIC = b"FFF\x00"
+
+
+def _make_seq_blob(frame_sizes):
+    """Build a synthetic SEQ blob with FFF magic at the start of each frame."""
+    return b"".join(FFF_MAGIC + bytes(size - len(FFF_MAGIC)) for size in frame_sizes)
+
+
+def _seq_from_blob(blob):
+    """Construct a Seq object from raw bytes without touching the filesystem."""
+    seq = object.__new__(Seq)
+    seq.seq_blob = blob
+    seq.raw = True
+    seq.width = None
+    seq.height = None
+    positions = [m.start() for m in seq._get_fff_iterator(blob)]
+    seq.pos = []
+    for i, index in enumerate(positions):
+        chunksize = (
+            positions[i + 1] - index if i + 1 < len(positions) else len(blob) - index
+        )
+        seq.pos.append((index, chunksize))
+    return seq
+
+
+class TestChunking:
+    def test_seq_uniform_chunk_sizes(self):
+        seq = _seq_from_blob(_make_seq_blob([500, 500, 500]))
+        assert len(seq.pos) == 3
+        assert all(size == 500 for _, size in seq.pos)
+
+    def test_seq_non_uniform_chunk_size(self):
+        seq = _seq_from_blob(_make_seq_blob([500, 500, 800]))
+        assert seq.pos == [(0, 500), (500, 500), (1000, 800)]
+
+    def test_seq_chunks_start_with_fff_magic(self):
+        blob = _make_seq_blob([400, 600, 700])
+        seq = _seq_from_blob(blob)
+        for offset, size in seq.pos:
+            assert blob[offset : offset + 4] == FFF_MAGIC
+
+    def test_seq_chunks_cover_full_file(self):
+        blob = _make_seq_blob([500, 500, 500])
+        seq = _seq_from_blob(blob)
+        assert sum(size for _, size in seq.pos) == len(blob)
 
 
 class TestSeqSplit:

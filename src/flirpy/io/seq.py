@@ -28,22 +28,18 @@ class Seq:
 
         self._fff_it = self._get_fff_iterator(self.seq_blob)
 
-        self.pos = []
-        prev_pos = 0
         self.raw = raw
 
-        # Iterate through sequence to get frame offsets
-        for match in self._fff_it:
-            index = match.start()
-            chunksize = index - prev_pos
+        # Collect all frame start positions, then compute each frame's size as
+        # the distance to the next frame (or end of file for the last frame).
+        positions = [match.start() for match in self._fff_it]
+        self.pos = []
+        for i, index in enumerate(positions):
+            if i + 1 < len(positions):
+                chunksize = positions[i + 1] - index
+            else:
+                chunksize = len(self.seq_blob) - index
             self.pos.append((index, chunksize))
-            prev_pos = index
-
-        # Fix up the first chunk size
-        if len(self.pos) > 1:
-            self.pos[0] = (0, self.pos[1][1])
-        elif len(self.pos) == 1:
-            self.pos[0] = (0, len(self.seq_blob))
 
         self.width = width
         self.height = height
