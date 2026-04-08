@@ -4,6 +4,8 @@
 
 [![DOI](https://zenodo.org/badge/146534780.svg)](https://zenodo.org/badge/latestdoi/146534780)
 
+[![Tests](https://github.com/LJMUAstroecology/flirpy/actions/workflows/python.yml/badge.svg)](https://github.com/LJMUAstroecology/flirpy/actions/workflows/python-package.yaml/badge.svg)
+
 ## Introduction
 
 flirpy is a Python library to interact with FLIR thermal imaging cameras and images. If you use flirpy for a research or other publishable application, please cite it using the Zenodo DOI.
@@ -129,54 +131,30 @@ Output images are numbered sequentially. If SEQ file 1 contains 1800 frames, the
 RGB extraction options are experimental. Generally it's difficult to sync the two streams because they do not start simultaneously and when the IR camera flat fields, it can cause odd discontinuities in the data. If you are familiar with multi-modal video synchronisation, we'd love to hear from you!
 ## Installation
 
-Flirpy has been tested with Python 3 and _may_ work on Python 2. It is always recommended that you install packages inside a virtualenv or Conda environment.
+Flirpy requires Python 3.10+, but you can install some older versions which should still work without any major changes. Most of the Py3 support is syntax sugar.
 
-Simply install using `pip`:
+Install from PyPI:
 
 ``` bash
 pip install flirpy
 ```
 
-Or you can clone the repository and run:
+Or clone the repository and install locally with [uv](https://docs.astral.sh/uv/):
 
 ``` bash
-pip install .
+uv sync
 ```
-
-Or:
-
-``` bash
-python setup.py install
-```
-
-Using `pip` is preferable, as it will let you uninstall the package if you need.
 
 flirpy is distributed with a copy of [Exiftool](https://sno.phy.queensu.ca/~phil/exiftool/) which is used to extract metadata from certain file formats.
 
-For a fast local pip install, e.g. from the repository:
-
-``` bash
-python setup.py bdist_wheel
-pip install flirpy --no-index --find-links ./dist
-```
-
-This will disable pip looking up stuff online and tell it to look in the dist folder for wheels. This is a useful command for testing!
-
 ### Installation on ARM (e.g. Raspberry Pi)
 
-Flirpy mostly works well, and has been tested, on the Raspberry Pi. If you're building from scratch, you need to install a few things manually. Try to use Python 3 if you can.
-
-It's recommended that you first install the Python dependencies using `pip` in combination with [piwheels](https://www.piwheels.org/). For whatever reason, `setuptools` does not find these files, so it will fail if e.g. OpenCV isn't installed already. Once you've set up piwheels (it should be automatic on Raspbian if you've installed pip3) run:
+Flirpy has been tested on ARM (including `aarch64`), including Raspberry Pi. `opencv-python-headless` now publishes `aarch64` wheels on PyPI so `uv sync` should work without any extra steps. On older systems you can look at [piwheels](https://www.piwheels.org/). On these systems you may need to install some dependencies for OpenCV, for example `libjasper-dev`. 
+You will still need to install Exiftool manually:
 
 ``` bash
-pip3 install -r requirements.txt
+sudo apt install exiftool
 ```
-
-You may need to install some dependencies for OpenCV, for example `libjasper-dev`.
-
-You should also install Exiftool manually with `sudo apt install exiftool`.
-
-Nowadays `opencv-python-headless` should exist on most ARM platforms, including `aarch64`.
 
 ## Grab images
 
@@ -274,16 +252,10 @@ You can solve this by going to device manager, right clicking on the USB device 
 To run the test suite:
 
 ``` bash
-pip install pytest pytest-cov
-python -m pytest --cov=flirpy
+uv sync --extra test
+uv run pytest
 ```
 
 Some tests are hardware dependent, e.g. for cameras, so expect them to fail unless you own and have a camera to try them with. Hardware tests are skipped by default if the requisite camera is not plugged in.
 
 The repository includes some small representative examples of image files (e.g. SEQ). It is tested and is routinely used with flight data from FLIR Duo cameras, so larger files aren't a problem, but they're too large to include in the repository.
-
-If you're testing on Python 2:
-```bash
-pip install pytest pytest-cov backports.tempfile
-pytest --cov=flirpy test
-```
