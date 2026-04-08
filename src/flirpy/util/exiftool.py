@@ -1,6 +1,7 @@
 import logging
 import os
 import platform
+import shutil
 import subprocess
 import sys
 from importlib.resources import files
@@ -20,18 +21,11 @@ class Exiftool:
                 self.path = str(files("flirpy").joinpath("bin/exiftool"))
             else:
                 # macOS or Linux ARM: use system exiftool
-                system_path = "/usr/bin/exiftool"
-                brew_path = "/usr/local/bin/exiftool"
-                homebrew_path = "/opt/homebrew/bin/exiftool"
-                for candidate in (system_path, brew_path, homebrew_path):
-                    if os.path.isfile(candidate):
-                        self.path = candidate
-                        break
-                else:
+                self.path = shutil.which("exiftool")
+                if self.path is None:
                     logger.warning(
                         "Exiftool not installed, try: brew install exiftool or apt install exiftool"
                     )
-                    self.path = None
 
         else:
             self.path = path
