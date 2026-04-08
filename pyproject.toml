@@ -35,11 +35,19 @@ dev = [
     "ruff",
 ]
 
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/",
+    "test/",
+    "scripts/",
+    "docs/",
+    "pyproject.toml",
+    "README.md",
+    "LICENSE.md",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["src/flirpy"]
-
-[tool.hatch.build.targets.wheel.force-include]
-"src/flirpy/bin" = "flirpy/bin"
 
 [tool.ruff]
 exclude = ["Untitled.ipynb"]
