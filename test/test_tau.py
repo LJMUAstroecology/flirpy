@@ -1,6 +1,3 @@
-import os
-import time
-
 import pytest
 
 from flirpy.camera.tau import Tau

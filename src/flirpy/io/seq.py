@@ -1,11 +1,7 @@
 import logging
 import os
 import re
-import subprocess
-from glob import glob, iglob
 
-import numpy as nump
-import tqdm
 from PIL import Image
 from tqdm.auto import tqdm
 
@@ -137,7 +133,6 @@ class Splitter:
         folders = []
 
         for seq in tqdm(file_list):
-
             if self.split_folders:
                 subfolder, _ = os.path.splitext(os.path.basename(seq))
                 folder = os.path.join(self.output_folder, subfolder)
@@ -189,13 +184,13 @@ class Splitter:
         return folders
 
     def _write_tiff(self, filename, data):
-        logger.debug("Writing {}", filename)
+        logger.debug("Writing %s", filename)
         Image.fromarray(data.astype("uint16")).save(filename)
 
     def _write_preview(self, filename, data):
         drange = data.max() - data.min()
         preview_data = 255.0 * ((data - data.min()) / drange)
-        logger.debug("Writing {}", filename)
+        logger.debug("Writing %s", filename)
         Image.fromarray(preview_data.astype("uint8")).save(filename)
 
     def _make_split_folders(self, output_folder):
@@ -215,7 +210,6 @@ class Splitter:
         logger.debug("Processing {}".format(input_file))
 
         for count, frame in enumerate(tqdm(self._get_seq(input_file))):
-
             if frame.meta is None:
                 self.frame_count += 1
                 continue
@@ -259,14 +253,12 @@ class Splitter:
                 )
 
             if self.frame_count % self.step == 0:
-
                 if self.export_meta and self._check_overwrite(filename_fff):
                     frame.write(filename_fff)
 
                 # Export raw files and/or radiometric convert them
                 if self.export_tiff and self._check_overwrite(filename_tiff):
                     if self.export_radiometric:
-
                         # Use Exiftool to extract metadata
                         if self.width is not None and self.height is not None:
                             # Export the first metadata
@@ -290,10 +282,8 @@ class Splitter:
 
             self.frame_count += 1
 
-        return
-
     def _write_frame(self, frame, filename):
-        logger.debug("Writing {}", filename)
+        logger.debug("Writing %s", filename)
         frame.write(filename)
 
 
@@ -313,7 +303,6 @@ class ExifToolSplitter(Splitter):
         logger.debug("Processing {}".format(input_file))
 
         for count, frame in enumerate(tqdm(self._get_seq(input_file))):
-
             if self.split_filetypes:
                 self._make_split_folders(output_subfolder)
 
@@ -355,14 +344,13 @@ class ExifToolSplitter(Splitter):
             self._write_frame(frame, filename_fff)
 
             if self.frame_count % self.step == 0:
-
                 self._write_frame(frame, filename_fff)
                 meta = self.exiftool.meta_from_file(filename_meta)
 
                 self.width = int(meta["Raw Thermal Image Width"])
                 self.height = int(meta["Raw Thermal Image Height"])
 
-                frame = Fff(
+                frame = Fff(  # noqa: PLW2901
                     filename_fff,
                     width=self.width,
                     height=self.height,
@@ -372,7 +360,6 @@ class ExifToolSplitter(Splitter):
                 # Export raw files and/or radiometric convert them
                 if self.export_tiff and self._check_overwrite(filename_tiff):
                     if self.export_radiometric:
-
                         image = frame.get_radiometric_image(meta=meta)
                         image += 273.15  # Convert to Kelvin
                         image /= 0.04  # Standard FLIR scale factor
@@ -386,5 +373,3 @@ class ExifToolSplitter(Splitter):
                     self._write_preview(filename_preview, image)
 
             self.frame_count += 1
-
-        return

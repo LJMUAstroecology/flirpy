@@ -3,14 +3,16 @@ boson.py
 ====================================
 Class for interacting with FLIR Boson cameras
 """
+
 import binascii
-import ctypes
 import logging
 import os
 import struct
+import subprocess
 import sys
 import time
 import warnings
+from importlib.resources import files
 
 import cv2
 from serial.tools import list_ports
@@ -289,9 +291,6 @@ crc_table = [
     0x0ED1,
     0x1EF0,
 ]
-import subprocess
-
-import pkg_resources
 
 
 class Boson(Core):
@@ -371,9 +370,7 @@ class Boson(Core):
         res = None
 
         if sys.platform.startswith("win32"):
-            device_check_path = pkg_resources.resource_filename(
-                "flirpy", "bin/find_cameras.exe"
-            )
+            device_check_path = str(files("flirpy").joinpath("bin/find_cameras.exe"))
             device_id = int(
                 subprocess.check_output([device_check_path, "FLIR Video"]).decode()
             )
@@ -398,7 +395,7 @@ class Boson(Core):
                     return device_id
 
         else:
-            import pyudev
+            import pyudev  # noqa: PLC0415
 
             context = pyudev.Context()
             devices = pyudev.Enumerator(context)
@@ -431,7 +428,7 @@ class Boson(Core):
                     cam.release()
 
                     # data[1] is the image and should be a numpy array
-                    if data[0] == True and data[1] is not None:
+                    if data[0] and data[1] is not None:
                         res = d
                         break
             elif len(dev) == 1:
@@ -521,8 +518,6 @@ class Boson(Core):
         function_id = 0x00050010
         self._send_packet(function_id)
 
-        return
-
     def get_sensor_serial(self):
         """
         Get the serial number of the sensor
@@ -586,8 +581,6 @@ class Boson(Core):
         """
         function_id = 0x00050007
         self._send_packet(function_id)
-
-        return
 
     def get_ffc_state(self):
         """
@@ -704,8 +697,6 @@ class Boson(Core):
         res = self._send_packet(function_id, data=command)
         res = self._decode_packet(res)
 
-        return
-
     def set_ffc_manual(self):
         """
         Set the FFC mode to manual
@@ -714,8 +705,6 @@ class Boson(Core):
         command = struct.pack(">I", FLR_BOSON_MANUAL_FFC)
         res = self._send_packet(function_id, data=command)
         res = self._decode_packet(res)
-
-        return
 
     def set_ffc_temperature_threshold(self, temp_change):
         """
@@ -730,8 +719,6 @@ class Boson(Core):
         command = struct.pack(">H", int(temp_change * 10))
         res = self._send_packet(function_id, data=command)
         res = self._decode_packet(res)
-
-        return
 
     def get_ffc_temperature_threshold(self):
         """
@@ -765,8 +752,6 @@ class Boson(Core):
         command = struct.pack(">I", seconds)
         res = self._send_packet(function_id, data=command)
         res = self._decode_packet(res)
-
-        return
 
     def get_ffc_frame_threshold(self):
         """
@@ -821,8 +806,6 @@ class Boson(Core):
         command = struct.pack(">H", num_frame)
         res = self._send_packet(function_id, data=command)
         res = self._decode_packet(res)
-
-        return
 
     def get_num_ffc_frame(self):
         """
@@ -903,8 +886,6 @@ class Boson(Core):
         function_id = 0x00050018
         self._send_packet(function_id)
 
-        return
-
     def set_pwr_on_defaults_factory(self):
         """
         This will restore power on defaults to factory settings. The camera should be disconnected and reconnected to
@@ -919,8 +900,6 @@ class Boson(Core):
         self.logger.warn(
             "Consider cycling power and reconnecting to camera to insure all factory settings take effect."
         )
-
-        return
 
     def set_averager(self, value):
         """
@@ -937,8 +916,6 @@ class Boson(Core):
         self.logger.warn(
             "The camera must be disconnected and reconnected for the change in averager state to take effect."
         )
-
-        return
 
     def get_averager(self):
         """
@@ -1127,9 +1104,8 @@ class Boson(Core):
         temp = bytearray()
 
         for byte in data:
-
             if sys.version_info[0] < 3:
-                byte = ord(byte)
+                byte = ord(byte)  # noqa: PLW2901
 
             if byte == 0x8E:
                 temp.append(0x9E)
@@ -1153,9 +1129,8 @@ class Boson(Core):
         unstuff = False
 
         for i, byte in enumerate(data):
-
             if sys.version_info[0] < 3:
-                byte = ord(byte)
+                byte = ord(byte)  # noqa: PLW2901
 
             if unstuff:
                 temp.append(byte + 0xD)

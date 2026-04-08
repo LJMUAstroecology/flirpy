@@ -1,8 +1,5 @@
 import os
-import subprocess
 import sys
-
-import pkg_resources
 
 if sys.version.startswith("2"):
     from backports import tempfile

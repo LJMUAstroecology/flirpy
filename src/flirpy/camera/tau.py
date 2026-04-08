@@ -5,7 +5,6 @@ import struct
 import time
 
 import numpy as np
-import pyftdi.serialext
 import serial
 import tqdm
 import usb.core
@@ -101,14 +100,14 @@ class Tau:
         argument = struct.pack(">h", mode)
         self._send_packet(function, argument)
         time.sleep(0.2)
-        res = self._read_packet(function)
+        self._read_packet(function)
 
     def disable_test_pattern(self):
         function = ptc.SET_TEST_PATTERN
         argument = struct.pack(">h", 0x00)
         self._send_packet(function, argument)
         time.sleep(0.2)
-        res = self._read_packet(function)
+        self._read_packet(function)
 
     def get_core_status(self):
         function = ptc.READ_SENSOR_STATUS
@@ -188,17 +187,13 @@ class Tau:
         function = ptc.SET_SHUTTER_POSITION
         argument = struct.pack(">h", 1)
         self._send_packet(function, argument)
-        res = self._read_packet(function)
-
-        return
+        self._read_packet(function)
 
     def open_shutter(self):
         function = ptc.SET_SHUTTER_POSITION
         argument = struct.pack(">h", 0)
         self._send_packet(function, argument)
-        res = self._read_packet(function)
-
-        return
+        self._read_packet(function)
 
     def digital_output_enabled(self):
         function = ptc.GET_DIGITAL_OUTPUT_MODE
@@ -270,7 +265,7 @@ class Tau:
 
         function = ptc.SET_DIGITAL_OUTPUT_MODE
 
-        if fourteen_bit == True:
+        if fourteen_bit:
             mode = 0x00
         else:
             mode = 0x01
@@ -318,7 +313,6 @@ class Tau:
         packet.append((crc_1 & 0x00FF).to_bytes(1, "big"))
 
         if packet_size > 0:
-
             # Second CRC is the CRC of the data (if any)
             crc_2 = binascii.crc_hqx(argument, 0)
             packet.append(argument)
@@ -449,7 +443,6 @@ class Tau:
         log.debug("Number of blocks to erase: {}".format(blocks_to_erase))
 
         for i in range(blocks_to_erase):
-
             function = ptc.ERASE_BLOCK
             block_id = starting_block + i
 
@@ -498,7 +491,6 @@ class Tau:
         data = []
         remaining = snapshot_size
         for i in tqdm.tqdm(range(n_transfers)):
-
             n_bytes = min(remaining, 256)
             function.reply_bytes = n_bytes
 
@@ -532,7 +524,7 @@ class Tau:
         function = ptc.DO_FFC_SHORT
 
         self._send_packet(function)
-        res = self._read_packet(function)
+        self._read_packet(function)
 
     def get_last_image(self):
         num_snapshots, _ = self.get_num_snapshots()
@@ -543,9 +535,8 @@ class Tau:
             return None
 
     def _send_data(self, data):
-        nbytes = self.conn.write(data)
+        self.conn.write(data)
         self.conn.flush()
-        return
 
     def _receive_data(self, nbytes):
         return self.conn.read(nbytes)
@@ -707,7 +698,6 @@ class TeaxGrabber(Tau):
         # to commands and waits to see the answer from the camera.
 
         for i in range(retries):
-
             data = b""
             data = self._sync()
 

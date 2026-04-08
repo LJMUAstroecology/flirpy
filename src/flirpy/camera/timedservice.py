@@ -35,7 +35,6 @@ class TimedService:
         elapsed = time.time() - self.last_service
 
         if elapsed >= self.timeout:
-
             tstart = time.time()
             self.function(*self.args)
 

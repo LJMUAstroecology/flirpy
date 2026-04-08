@@ -1,9 +1,7 @@
-import os
 import time
 
 import pytest
 
-import flirpy.camera.boson
 from flirpy.camera.boson import Boson
 from flirpy.camera.threadedboson import ThreadedBoson
 

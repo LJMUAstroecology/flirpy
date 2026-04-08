@@ -24,13 +24,13 @@ class Encoder16:
         p = n / w
 
         for d in range(int(w)):
-            l = (float(d) + 0.5) / w
+            lv = (float(d) + 0.5) / w
 
             p2 = p / 2
             p4 = p / 4
 
-            lp2 = l / p2 % 2
-            lp4 = (l - p4) / p2 % 2
+            lp2 = lv / p2 % 2
+            lp4 = (lv - p4) / p2 % 2
 
             if lp2 <= 1:
                 ha = lp2
@@ -42,20 +42,20 @@ class Encoder16:
             else:
                 hb = 2 - lp4
 
-            lut.append((l, ha, hb))
+            lut.append((lv, ha, hb))
 
         return lut
 
     def decode(self, d):
-        l, ha, hb = d
+        lv, ha, hb = d
 
         n = self.n
         w = self.w
         p = n / w
 
-        m = math.floor(4 * (l / p) - 0.5) % 4
+        m = math.floor(4 * (lv / p) - 0.5) % 4
 
-        l0 = l - p / 8 + (p / 4) * m - ((l - p / 8) % p)
+        l0 = lv - p / 8 + (p / 4) * m - ((lv - p / 8) % p)
 
         if m == 0:
             delta = (p / 2) * ha
