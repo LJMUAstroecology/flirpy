@@ -131,7 +131,7 @@ Output images are numbered sequentially. If SEQ file 1 contains 1800 frames, the
 RGB extraction options are experimental. Generally it's difficult to sync the two streams because they do not start simultaneously and when the IR camera flat fields, it can cause odd discontinuities in the data. If you are familiar with multi-modal video synchronisation, we'd love to hear from you!
 ## Installation
 
-Flirpy requires Python 3.10+, but you can install some older versions which should still work without any major changes. Most of the Py3 support is syntax sugar.
+Flirpy requires Python 3.11 or later. It may work on older versions, but Python <= 3.10 is EOL and you are strongly advised to upgrade for security reasons.
 
 Install from PyPI:
 

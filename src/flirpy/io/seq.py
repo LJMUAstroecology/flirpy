@@ -101,7 +101,7 @@ class Seq:
 
 
 class Splitter:
-    def __init__(
+    def __init__(  # noqa: PLR0917
         self,
         output_folder="./",
         exiftool_path=None,

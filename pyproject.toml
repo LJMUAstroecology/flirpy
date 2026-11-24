@@ -9,11 +9,11 @@ version = "0.6.2"
 authors = [
     { name = "Josh Veitch-Michaelis", email = "jveitchmichaelis@gmail.com" }
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "numpy>=1.26,<2.4",
     "natsort",
-    "pillow",
+    "pillow>=13.0.0",
     "psutil",
     "pyftdi",
     "pyserial",
@@ -25,14 +25,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = [
+dev = [
+    "ruff",
     "pytest",
     "pytest-cov",
     "coverage-badge",
     "coverage",
-]
-dev = [
-    "ruff",
 ]
 
 [tool.hatch.build.targets.sdist]
@@ -78,4 +76,9 @@ testpaths = [
 
 filterwarnings = [
     "ignore::DeprecationWarning"
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.6.2",
 ]
