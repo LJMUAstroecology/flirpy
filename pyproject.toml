@@ -25,14 +25,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-test = [
+dev = [
+    "ruff",
     "pytest",
     "pytest-cov",
     "coverage-badge",
     "coverage",
-]
-dev = [
-    "ruff",
 ]
 
 [tool.hatch.build.targets.sdist]
@@ -78,4 +76,9 @@ testpaths = [
 
 filterwarnings = [
     "ignore::DeprecationWarning"
+]
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.6.2",
 ]
