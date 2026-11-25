@@ -53,8 +53,8 @@ def raw2temp(raw, meta) -> np.ndarray:
     RTemp = from_string_or_float(meta["Reflected Apparent Temperature"])
     humidity = from_string_or_float(meta["Relative Humidity"])
 
-    # Convert humidity to decimal
-    if humidity / 100 > 1:
+    # Convert humidity to decimal; values above 1 are treated as percentages
+    if humidity > 1:
         humidity /= 100
 
     # Equations to convert to temperature
